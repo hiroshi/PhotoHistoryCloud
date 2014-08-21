@@ -1,0 +1,125 @@
+<html>
+  <head>
+    <title>PhotoHistory cloud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui">
+
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/react-with-addons.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/JSXTransformer.js"></script>
+    <script type="text/javascript">
+      var CLIENT_ID = '435553828201-tcm1r26n4me1fq60i2a4l6rnmop18h3s.apps.googleusercontent.com';
+      //var CLIENT_ID = '435553828201-su0l9n1fmssc7mtre72kpj96j60j1f9f.apps.googleusercontent.com';
+      var SCOPES = 'https://www.googleapis.com/auth/drive';
+
+      /**
+       * Called when the client library is loaded to start the auth flow.
+       */
+      function handleClientLoad() {
+        window.setTimeout(checkAuth, 1);
+      }
+
+      /**
+       * Check if the current user has authorized the application.
+       */
+      function checkAuth() {
+        gapi.auth.authorize(
+            {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true},
+            handleAuthResult);
+      }
+
+      /**
+       * Called when authorization server replies.
+       *
+       * @param {Object} authResult Authorization result.
+       */
+      function handleAuthResult(authResult) {
+        var authButton = document.getElementById('authorizeButton');
+        // var filePicker = document.getElementById('filePicker');
+        authButton.style.display = 'none';
+        //filePicker.style.display = 'none';
+        console.log('handleAuthResult...');
+        if (authResult && !authResult.error) {
+          // Access token has been successfully retrieved, requests can be sent to the API.
+          //filePicker.style.display = 'block';
+          //filePicker.onchange = uploadFile;
+
+         //gapi.client.setApiKey('AIzaSyDpw2qDFJjfGqWOpDNw2J00H4IClMn60I4');
+         console.log('gapi.client.load...');
+         gapi.client.load('drive', 'v2', function() {
+           //App.hoge();
+           PhotoStore.load();
+         });
+         
+        } else {
+          // No access token could be retrieved, show the button to start the authorization flow.
+          authButton.style.display = 'block';
+          authButton.onclick = function() {
+              gapi.auth.authorize(
+                  {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false},
+                  handleAuthResult);
+          };
+        }
+      }
+    </script>
+    <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+  </head>
+  <body>
+    <style>
+      .thumb { 
+        width: 72px;
+        height: 72px;
+        overflow: hidden;
+        position: relative;
+        margin: 2px;
+        display: inline-block;
+      }
+      .thumb img {
+        position: absolute;
+        left: -100%;
+        right: -100%;
+        top: -100%;
+        bottom: -100%;
+        margin: auto;
+        min-width: 100%;
+        min-height: 100%;
+      }
+      .thumb .label {
+        position: absolute;
+        color: black;
+        background-color: white;
+        opacity: 0.8;
+        width: 100%;
+        left: 0;
+        bottom: 0;
+      }
+      @media (min-width:768px) {
+        .thumb {
+          width: 120px;
+          height: 120px;
+        }
+        .thumb .label {
+          padding: 0 4px;
+          font-size: small;
+        }
+      }
+      @media (max-width:767px) {
+        .thumb {
+          width: 72px;
+          height: 72px;
+        }
+        .thumb .label {
+          padding: 0 2px;
+          font-size: x-small;
+        }
+      }
+
+    </style>
+    <!--Add a file picker for the user to start the upload process -->
+    <!--<input type="file" id="filePicker" style="display: none" />-->
+    <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
+
+    <div id="app"></div>
+
+    <script type="text/jsx" src="./app.js">
+  </body>
+</html>
