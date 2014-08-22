@@ -72,41 +72,43 @@ var PhotoStore = {
       maxResults: 1000
     };
     var _retrieve = function(request) {
-      console.log("retrieving...");
-      request.execute(function(resp) {
-        console.log("retrieving...done");
-        var items = this.items;
+      request.execute(function(resp, rawResp) {
         //items = items.concat(resp.items)
-        resp.items.forEach(function(item) {
-          var dateString = item.imageMediaMetadata.date; // may be in '2014:08:13 17:57:04' format
-          if (dateString) {
-            var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
-            if (m) {
-              dateString = m[1] + "/" + m[2] + "/" + m[3];
+        if (resp) {
+          var items = this.items;
+          resp.items.forEach(function(item) {
+            var dateString = item.imageMediaMetadata.date; // may be in '2014:08:13 17:57:04' format
+            if (dateString) {
+              var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
+              if (m) {
+                dateString = m[1] + "/" + m[2] + "/" + m[3];
+              }
             }
+            item._date = dateString ? new Date(dateString) : new Date();
+            //binInsert(items, item, function(a) {
+            binSearch(items, function(e) {
+              return e._date - item._date;
+            }, {atIndex: function(i) {
+              items.splice(i, 0, item);
+            }});
+            //this.setState({items: items});
+            //items.push(item);
+          });
+          this.items = items;
+          //this.updateMonths();
+          this.callbacks.months.forEach(function(callback) {
+            callback({items: items});
+          });
+          if (resp.nextPageToken) {
+            options.pageToken = resp.nextPageToken;
+            _retrieve(gapi.client.drive.files.list(options));
+          } else {
+            // finish loading
+            this.callbacks.months.forEach(function(callback) {
+              callback({loading: false});
+            });
           }
-          item._date = dateString ? new Date(dateString) : new Date();
-          //binInsert(items, item, function(a) {
-          binSearch(items, function(e) {
-            return e._date - item._date;
-          }, {atIndex: function(i) {
-            items.splice(i, 0, item);
-          }});
-          //this.setState({items: items});
-          //items.push(item);
-        });
-        //this.setState({items: items});
-        this.items = items;
-        //this.updateMonths();
-        this.callbacks.months.forEach(function(callback) {
-          callback({items: items});
-        });
-        
-        if (resp.nextPageToken) {
-          options.pageToken = resp.nextPageToken;
-          _retrieve(gapi.client.drive.files.list(options));
         } else {
-          // finish loading
           this.callbacks.months.forEach(function(callback) {
             callback({loading: false});
           });
@@ -154,7 +156,7 @@ var PhotoApp = React.createClass({
       months: [],
       visibleThumbCount: 50,
       visibleThumbIndex: 0,
-      loading: false,
+      loading: true,
     };
   },
   // FIXME: implement componentDidUnmount
@@ -184,11 +186,15 @@ var PhotoApp = React.createClass({
     this.setState({items: PhotoStore.getItemsSince(date)});
   },
   render: function () {
-    var user = (
+    var user = null
+    if (this.state.email) {
+      user = (
         <div>
           <span>{this.state.email}</span>
           (<a href="https://accounts.google.com/logout">logout</a>)
-        </div>);
+        </div>
+      );
+    }
     var monthNodes = this.state.months.map(function(m) {
       return <MonthLabel month={m} selectDate={this.selectDate} />;
     }.bind(this));
@@ -214,10 +220,18 @@ var PhotoApp = React.createClass({
       );
     }.bind(this));
     var loading = this.state.loading ? "loading..." : "";
+    var count = this.state.items.length;
+    if (!this.state.items.length && !this.state.loading) {
+        count = (
+          <span>
+            No image found. Try uploading some via <a href="https://drive.google.com/" target="_blank">Google Drive</a>.
+          </span>
+        );
+    }
     return (
        <div>
          {user}
-         <h1>Photos: {this.state.items.length} {loading}</h1>
+         <h1>Photos: {count} {loading}</h1>
          <ul>{monthNodes}</ul>
          <div>
            {thumbs}
