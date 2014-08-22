@@ -67,7 +67,7 @@ var PhotoStore = {
   },
   load: function() {
     var options = {
-      q: "mimeType contains 'image/'",
+      q: "mimeType contains 'image/' and trashed = false",
       fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink),nextPageToken",
       maxResults: 1000
     };
