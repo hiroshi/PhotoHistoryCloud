@@ -3,6 +3,13 @@ PhotoHistoryCloud
 
 A way to see photos in Google Drive
 
+## Note
+- OS X 10.9.4 / MacBook Air (11-inch, Mid 2011)
+-- Safari - works very well.
+-- Chrome, Firefox - sluggish.
+- iOS 7
+-- iPhone 5 - works very well.
+-- iPad 2 - rendering is slow.
 
 
 ## A guide for seting up your own Google Cloud Project
