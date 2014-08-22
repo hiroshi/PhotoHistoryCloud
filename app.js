@@ -184,6 +184,11 @@ var PhotoApp = React.createClass({
     this.setState({items: PhotoStore.getItemsSince(date)});
   },
   render: function () {
+    var user = (
+        <div>
+          <span>{this.state.email}</span>
+          (<a href="https://accounts.google.com/logout">logout</a>)
+        </div>);
     var monthNodes = this.state.months.map(function(m) {
       return <MonthLabel month={m} selectDate={this.selectDate} />;
     }.bind(this));
@@ -207,16 +212,11 @@ var PhotoApp = React.createClass({
           {img}
         </div>
       );
-      /*return (
-        <div key={item.id} className="thumb">
-          <img src={item.thumbnailLink} style={imgStyle} />
-          <span>{String(item._date)}</span>
-        </div>
-      );*/
     }.bind(this));
     var loading = this.state.loading ? "loading..." : "";
     return (
        <div>
+         {user}
          <h1>Photos: {this.state.items.length} {loading}</h1>
          <ul>{monthNodes}</ul>
          <div>

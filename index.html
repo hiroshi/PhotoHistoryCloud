@@ -8,7 +8,9 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/JSXTransformer.js"></script>
     <script type="text/javascript">
       var CLIENT_ID = '270744618004-sc56ljkbn8tabp0beq43s09p9p37cnbl.apps.googleusercontent.com';
-      var SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+      var SCOPES = [
+       'https://www.googleapis.com/auth/drive.readonly',
+     ].join(" ");
 
       /**
        * Called when the client library is loaded to start the auth flow.
@@ -33,22 +35,15 @@
        */
       function handleAuthResult(authResult) {
         var authButton = document.getElementById('authorizeButton');
-        // var filePicker = document.getElementById('filePicker');
         authButton.style.display = 'none';
-        //filePicker.style.display = 'none';
-        console.log('handleAuthResult...');
         if (authResult && !authResult.error) {
           // Access token has been successfully retrieved, requests can be sent to the API.
-          //filePicker.style.display = 'block';
-          //filePicker.onchange = uploadFile;
-
-         //gapi.client.setApiKey('AIzaSyDpw2qDFJjfGqWOpDNw2J00H4IClMn60I4');
-         console.log('gapi.client.load...');
-         gapi.client.load('drive', 'v2', function() {
-           //App.hoge();
-           PhotoStore.load();
-         });
-         
+          gapi.client.load('drive', 'v2', function() {
+            gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
+              App.setState({email: resp.user.emailAddress})
+            });
+            PhotoStore.load();
+          });
         } else {
           // No access token could be retrieved, show the button to start the authorization flow.
           authButton.style.display = 'block';
