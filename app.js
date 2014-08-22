@@ -190,8 +190,7 @@ var PhotoApp = React.createClass({
     if (this.state.email) {
       user = (
         <div>
-          <span>{this.state.email}</span>
-          (<a href="https://accounts.google.com/logout">logout</a>)
+          <span>{this.state.email}</span> (<a href="https://accounts.google.com/logout">logout</a>)
         </div>
       );
     }
