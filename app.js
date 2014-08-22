@@ -64,9 +64,6 @@ var PhotoStore = {
       }
     }
     this.months = months;
-    // this.callbacks.months.forEach(function(callback) {
-    //   callback(months, items);
-    // });
   },
   load: function() {
     var options = {
@@ -102,20 +99,25 @@ var PhotoStore = {
         this.items = items;
         //this.updateMonths();
         this.callbacks.months.forEach(function(callback) {
-          callback([], items);
+          callback({items: items});
         });
         
         if (resp.nextPageToken) {
           options.pageToken = resp.nextPageToken;
           _retrieve(gapi.client.drive.files.list(options));
         } else {
-          // this.callbacks.months.forEach(function(callback) {
-          //   callback([], items);
-          // });
-          //this.setState({items: items});
+          // finish loading
+          this.callbacks.months.forEach(function(callback) {
+            callback({loading: false});
+          });
         }
       }.bind(this));
     }.bind(this);
+    // satrt loading
+    this.callbacks.months.forEach(function(callback) {
+      callback({loading: true});
+    });
+
     _retrieve(gapi.client.drive.files.list(options));
   },
   getItemsSince: function(date) {
@@ -152,13 +154,13 @@ var PhotoApp = React.createClass({
       months: [],
       visibleThumbCount: 50,
       visibleThumbIndex: 0,
+      loading: false,
     };
   },
   // FIXME: implement componentDidUnmount
   componentDidMount: function() {
-    PhotoStore.registerMonthsUpdate(function(months, items) {
-      //this.setState({months: months});
-      this.setState({items: items});
+    PhotoStore.registerMonthsUpdate(function(updates) {
+      this.setState(updates);
     }.bind(this));
     window.addEventListener('scroll', function(e) {
        //var y = window.scrollY;
@@ -212,10 +214,10 @@ var PhotoApp = React.createClass({
         </div>
       );*/
     }.bind(this));
-
+    var loading = this.state.loading ? "loading..." : "";
     return (
        <div>
-         <h1>Photos: {this.state.items.length}</h1>
+         <h1>Photos: {this.state.items.length} {loading}</h1>
          <ul>{monthNodes}</ul>
          <div>
            {thumbs}
