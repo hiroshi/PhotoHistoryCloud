@@ -149,6 +149,22 @@ var MonthLabel = React.createClass({
   }
 });
 
+var Navigation = React.createClass({
+  render: function() {
+    var yearMonthString = null;
+    var item = PhotoStore.items[this.props.index];
+    if (item) {
+      var date = item._date;
+      yearMonthString = date.toLocaleDateString();
+    }
+    return (
+      <div className="navigation">
+        <a href="#">{yearMonthString}</a>
+      </div>
+    );
+  }
+});
+
 var PhotoApp = React.createClass({
   getInitialState: function() {
     return {
@@ -175,6 +191,7 @@ var PhotoApp = React.createClass({
       var range = 2;
       var numDisplay = Math.floor(range * total * frameH / contentH);
       var thumbIndex = Math.floor((total * window.scrollY / contentH) - (numDisplay - numDisplay/range) / 2);
+      thumbIndex = Math.min(Math.max(0, thumbIndex), total - 1);
       //console.log("num: " + numDisplay + " index: " + thumbIndex);
       this.setState({visibleThumbCount: numDisplay, visibleThumbIndex: thumbIndex});
     }.bind(this));
@@ -229,6 +246,7 @@ var PhotoApp = React.createClass({
     }
     return (
        <div>
+         <Navigation index={this.state.visibleThumbIndex} />
          {user}
          <h1>Photos: {count} {loading}</h1>
          <ul>{monthNodes}</ul>

@@ -56,9 +56,28 @@
       }
     </script>
     <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
-  </head>
-  <body>
     <style>
+      .container {
+        padding-top: 40px;
+      }
+      .navigation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        color: black;
+        background-color: white;
+        opacity: 0.8;
+        z-index: 1;
+
+        height: 30px;
+        font-size: 20px;
+        padding: 4px 12px;
+      }
+      .navigation a {
+        color: inherit;
+        text-decoration: none;
+      }
       .thumb { 
         width: 72px;
         height: 72px;
@@ -106,14 +125,13 @@
           font-size: x-small;
         }
       }
-
     </style>
-    <!--Add a file picker for the user to start the upload process -->
-    <!--<input type="file" id="filePicker" style="display: none" />-->
-    <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
-
-    <div id="app"></div>
-
-    <script type="text/jsx" src="./app.js">
+  </head>
+  <body>
+    <div class="container">
+      <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
+      <div id="app"></div>
+      <script type="text/jsx" src="./app.js"></script>
+    </div>
   </body>
 </html>
