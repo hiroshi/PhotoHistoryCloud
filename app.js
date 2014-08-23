@@ -36,9 +36,14 @@ function yearMonthString(d) {
 var PhotoStore = {
   items: [],
   months: [],
-  callbacks: {months: []},
-  registerMonthsUpdate: function(callback) {
-    this.callbacks.months.push(callback);
+  callbacks: [],
+  registerUpdate: function(callback) {
+    this.callbacks.push(callback);
+  },
+  callbackUpdate: function(updates) {
+    this.callbacks.forEach(function(callback) {
+      callback(updates);
+    });
   },
   updateMonths: function() {
     var items = this.items;
@@ -73,7 +78,6 @@ var PhotoStore = {
     };
     var _retrieve = function(request) {
       request.execute(function(resp, rawResp) {
-        //items = items.concat(resp.items)
         if (resp) {
           var items = this.items;
           resp.items.forEach(function(item) {
@@ -96,30 +100,21 @@ var PhotoStore = {
           });
           this.items = items;
           //this.updateMonths();
-          this.callbacks.months.forEach(function(callback) {
-            callback({items: items});
-          });
+          this.callbackUpdate({items: items});
           if (resp.nextPageToken) {
             options.pageToken = resp.nextPageToken;
             _retrieve(gapi.client.drive.files.list(options));
           } else {
             // finish loading
-            this.callbacks.months.forEach(function(callback) {
-              callback({loading: false});
-            });
+            this.callbackUpdate({loading: false});
           }
         } else {
-          this.callbacks.months.forEach(function(callback) {
-            callback({loading: false});
-          });
+          this.callbackUpdate({loading: false});
         }
       }.bind(this));
     }.bind(this);
     // satrt loading
-    this.callbacks.months.forEach(function(callback) {
-      callback({loading: true});
-    });
-
+    this.callbackUpdate({loading: true});
     _retrieve(gapi.client.drive.files.list(options));
   },
   getItemsSince: function(date) {
@@ -177,7 +172,7 @@ var PhotoApp = React.createClass({
   },
   // FIXME: implement componentDidUnmount
   componentDidMount: function() {
-    PhotoStore.registerMonthsUpdate(function(updates) {
+    PhotoStore.registerUpdate(function(updates) {
       this.setState(updates);
     }.bind(this));
     window.addEventListener('scroll', function(e) {
