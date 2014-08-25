@@ -40,7 +40,8 @@ function nextMonth(d) {
 }
 
 function yearMonthString(d) {
-  return d.toISOString().match(/\d+-\d+/)[0];
+  //return d.toISOString().match(/\d+-\d+/)[0];
+  return d.getFullYear() + "-" + ('0' + (d.getMonth() + 1)).slice(-2);
 }
 
 var PhotoStore = {
@@ -151,26 +152,35 @@ var PhotoStore = {
   }
 };
 
-var MonthLabel = React.createClass({
-  _handleClick: function() {
-    //console.log(this.props.month.date);
-    this.props.selectDate(this.props.month.date);
-  },
-  render: function() {
-    var m = this.props.month;
-    var monthString = yearMonthString(m.date)
-    return (
-      <li key={monthString}>
-        <a href="#" onClick={this._handleClick}>{monthString} ({m.count})</a>
-      </li>
-    );
-  }
-});
+// var MonthLabel = React.createClass({
+//   _handleClick: function() {
+//     //console.log(this.props.month.date);
+//     this.props.selectDate(this.props.month.date);
+//   },
+//   render: function() {
+//     var m = this.props.month;
+//     var monthString = yearMonthString(m.date)
+//     return (
+//       <li key={monthString}>
+//         <a href="#" onClick={this._handleClick}>{monthString} ({m.count})</a>
+//       </li>
+//     );
+//   }
+// });
 
 var NavMonth = React.createClass({
+  _handleClick: function() {
+    this.props.toggleNav();
+  },
   render: function() {
     var month = this.props.month;
-    return <li><a href={'#' + yearMonthString(month.date)}>{month.date.toLocaleDateString()}</a></li>;    
+    return (
+      <li>
+        <a href={'#' + yearMonthString(month.date)} onClick={this._handleClick}>
+          {month.date.toLocaleDateString()}
+        </a>
+      </li>
+    );
   }
 });
 
@@ -178,7 +188,11 @@ var Navigation = React.createClass({
   getInitialState: function() {
     return {open: false};
   },
-  handleClick: function() {
+  _handleClick: function() {
+    this.toggleNav();
+    return false;
+  },
+  toggleNav: function() {
     this.setState({open: !this.state.open});
   },
   render: function() {
@@ -186,13 +200,13 @@ var Navigation = React.createClass({
     var current = null;
     if (item) {
       var date = item._date;
-      current = <a href={'#' + yearMonthString(date)} onClick={this.handleClick}>{date.toLocaleDateString()}</a>;
+      current = <a href='#' onClick={this._handleClick}>{date.toLocaleDateString()}</a>;
     }
     var months = null;
     if (this.state.open) {
       var items = this.props.months.map(function(e) {
-        return <NavMonth key={yearMonthString(e.date)} month={e} />;
-      });
+        return <NavMonth key={yearMonthString(e.date)} month={e} toggleNav={this.toggleNav} />;
+      }.bind(this));
       var months = (
         <ul className="months">
           {items}
@@ -268,15 +282,17 @@ var PhotoApp = React.createClass({
         var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
         var dateLabel = item._date.toLocaleDateString();
         img = (
-          <a href={item.alternateLink} target="_blank">
+          <div>
             <img src={item.thumbnailLink} style={imgStyle} />
             <div className="label">{dateLabel}</div>
-          </a>
+          </div>
         );
       }
       return (
         <div key={item.id} className="thumb">
-          {img}
+          <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
+            {img}
+          </a>
         </div>
       );
     }.bind(this));
