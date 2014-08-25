@@ -62,10 +62,10 @@ var PhotoStore = {
     if (items.length > 0) {
       var first = items[0]._date;
       var last = items[items.length - 1]._date;
-      var prev = first;
+      var prev = begginingOfMonth(first);
       var next = nextMonth(first);
       var total = 0;
-      while(next < last) {
+      while (prev < last) {
         binSearch(items, function(e) {
           return e._date - next;
         }, {atIndex: function(i, found) {
@@ -102,25 +102,11 @@ var PhotoStore = {
               }
             }
             item._date = dateString ? new Date(dateString) : new Date();
-            //binInsert(items, item, function(a) {
             binSearch(items, function(e) {
               return e._date - item._date;
             }, {atIndex: function(itemIndex) {
               items.splice(itemIndex, 0, item);
-              // // update yearMonths
-              // var bm = begginingOfMonth(item._date);
-              // binSearch(this.yearMonths, function(m) {
-              //   return m.bm - bm;
-              // }, {atIndex: function(j, found) {
-              //   if (found) {
-              //     this.yearMonths[j].index = itemIndex;
-              //   } else {
-              //     this.yearMonths.splice(j, 0, {bm: bm, index: itemIndex});
-              //   }
-              // }.bind(this)});
             }.bind(this)});
-            //this.setState({items: items});
-            //items.push(item);
           }.bind(this));
           this.items = items;
           this.updateMonths();
@@ -151,22 +137,6 @@ var PhotoStore = {
     return this.items.slice(index, index + 50);
   }
 };
-
-// var MonthLabel = React.createClass({
-//   _handleClick: function() {
-//     //console.log(this.props.month.date);
-//     this.props.selectDate(this.props.month.date);
-//   },
-//   render: function() {
-//     var m = this.props.month;
-//     var monthString = yearMonthString(m.date)
-//     return (
-//       <li key={monthString}>
-//         <a href="#" onClick={this._handleClick}>{monthString} ({m.count})</a>
-//       </li>
-//     );
-//   }
-// });
 
 var NavMonth = React.createClass({
   _handleClick: function() {
