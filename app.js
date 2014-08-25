@@ -1,6 +1,6 @@
 /** @jsx React.DOM */
 function binSearch(list, compare, options) {
-  var min = 0, max = list.length - 1;
+  var min = 0, max = list.length - 1, found = false, index = 0;
   if (!options) {
     options = {}
   }
@@ -9,21 +9,31 @@ function binSearch(list, compare, options) {
     var d = compare(list[mid]);
     if (d == 0) {
       min = mid;
+      found = true;
+      index = mid;
       break;
     } else if (d < 0) { // item is lager than mid
       min = mid + 1;
+      index = mid + 1;
     } else {
       max = mid - 1;
+      index = mid;
     }
   }
   if (options.atIndex) {
-    options.atIndex(min);
+    options.atIndex(index, found);
   }
-  return (max >= min);
+  return found;
+}
+
+function begginingOfMonth(d) {
+  //var n = new Date(d.getTime());
+  // var n = new Date(d.getFullYear(), d.getMonth())
+  // n.setMonth(n.getMonth() + 1)
+  return new Date(d.getFullYear(), d.getMonth());
 }
 
 function nextMonth(d) {
-  //var n = new Date(d.getTime());
   var n = new Date(d.getFullYear(), d.getMonth())
   n.setMonth(n.getMonth() + 1)
   return n;
@@ -34,8 +44,8 @@ function yearMonthString(d) {
 }
 
 var PhotoStore = {
-  items: [],
-  months: [],
+  items: [], // [{..., _date}]
+  yearMonths: [], // [{index, '2009-02'},...]
   callbacks: [],
   registerUpdate: function(callback) {
     this.callbacks.push(callback);
@@ -57,10 +67,10 @@ var PhotoStore = {
       while(next < last) {
         binSearch(items, function(e) {
           return e._date - next;
-        }, {atIndex: function(i) {
+        }, {atIndex: function(i, found) {
           var count = i - total;
           if (count > 0) {
-            months.push({date: prev, count: count});
+            months.push({date: prev, index: i - count, count: count});
           }
           total = i;
         }});
@@ -68,7 +78,7 @@ var PhotoStore = {
         next = nextMonth(next);
       }
     }
-    this.months = months;
+    this.yearMonths = months;
   },
   load: function() {
     var options = {
@@ -81,7 +91,9 @@ var PhotoStore = {
         if (resp) {
           var items = this.items;
           resp.items.forEach(function(item) {
-            var dateString = item.imageMediaMetadata.date; // may be in '2014:08:13 17:57:04' format
+            // imageMediaMetadata.date may be in '2014:08:13 17:57:04' format,
+            // so convert it to be able to be parsed as Date.
+            var dateString = item.imageMediaMetadata.date;
             if (dateString) {
               var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
               if (m) {
@@ -92,15 +104,26 @@ var PhotoStore = {
             //binInsert(items, item, function(a) {
             binSearch(items, function(e) {
               return e._date - item._date;
-            }, {atIndex: function(i) {
-              items.splice(i, 0, item);
-            }});
+            }, {atIndex: function(itemIndex) {
+              items.splice(itemIndex, 0, item);
+              // // update yearMonths
+              // var bm = begginingOfMonth(item._date);
+              // binSearch(this.yearMonths, function(m) {
+              //   return m.bm - bm;
+              // }, {atIndex: function(j, found) {
+              //   if (found) {
+              //     this.yearMonths[j].index = itemIndex;
+              //   } else {
+              //     this.yearMonths.splice(j, 0, {bm: bm, index: itemIndex});
+              //   }
+              // }.bind(this)});
+            }.bind(this)});
             //this.setState({items: items});
             //items.push(item);
-          });
+          }.bind(this));
           this.items = items;
-          //this.updateMonths();
-          this.callbackUpdate({items: items});
+          this.updateMonths();
+          this.callbackUpdate({items: items, months: this.yearMonths});
           if (resp.nextPageToken) {
             options.pageToken = resp.nextPageToken;
             _retrieve(gapi.client.drive.files.list(options));
@@ -144,17 +167,44 @@ var MonthLabel = React.createClass({
   }
 });
 
-var Navigation = React.createClass({
+var NavMonth = React.createClass({
   render: function() {
-    var yearMonthString = null;
+    var month = this.props.month;
+    return <li><a href={'#' + yearMonthString(month.date)}>{month.date.toLocaleDateString()}</a></li>;    
+  }
+});
+
+var Navigation = React.createClass({
+  getInitialState: function() {
+    return {open: false};
+  },
+  handleClick: function() {
+    this.setState({open: !this.state.open});
+  },
+  render: function() {
     var item = PhotoStore.items[this.props.index];
+    var current = null;
     if (item) {
       var date = item._date;
-      yearMonthString = date.toLocaleDateString();
+      current = <a href={'#' + yearMonthString(date)} onClick={this.handleClick}>{date.toLocaleDateString()}</a>;
+    }
+    var months = null;
+    if (this.state.open) {
+      var items = this.props.months.map(function(e) {
+        return <NavMonth key={yearMonthString(e.date)} month={e} />;
+      });
+      var months = (
+        <ul className="months">
+          {items}
+        </ul>
+      );
     }
     return (
       <div className="navigation">
-        <a href="#">{yearMonthString}</a>
+        <div>
+          {current}
+          {months}
+        </div>
       </div>
     );
   }
@@ -206,9 +256,9 @@ var PhotoApp = React.createClass({
         </div>
       );
     }
-    var monthNodes = this.state.months.map(function(m) {
-      return <MonthLabel month={m} selectDate={this.selectDate} />;
-    }.bind(this));
+    // var monthNodes = this.state.months.map(function(m) {
+    //   return <MonthLabel month={m} selectDate={this.selectDate} />;
+    // }.bind(this));
     //var thumbs = "";
     var thumbs = this.state.items.map(function(item, index) {
       var img = null;
@@ -241,10 +291,9 @@ var PhotoApp = React.createClass({
     }
     return (
        <div>
-         <Navigation index={this.state.visibleThumbIndex} />
+         <Navigation index={this.state.visibleThumbIndex} months={this.state.months} />
          {user}
          <h1>Photos: {count} {loading}</h1>
-         <ul>{monthNodes}</ul>
          <div>
            {thumbs}
          </div>
