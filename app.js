@@ -143,11 +143,10 @@ var NavMonth = React.createClass({
     this.props.toggleNav();
   },
   render: function() {
-    var month = this.props.month;
     return (
       <li>
-        <a href={'#' + yearMonthString(month.date)} onClick={this._handleClick}>
-          {month.date.toLocaleDateString()}
+        <a href={'#' + yearMonthString(this.props.date)} onClick={this._handleClick}>
+          {this.props.title}
         </a>
       </li>
     );
@@ -174,11 +173,29 @@ var Navigation = React.createClass({
     }
     var months = null;
     if (this.state.open) {
-      var items = this.props.months.map(function(e) {
-        return <NavMonth key={yearMonthString(e.date)} month={e} toggleNav={this.toggleNav} />;
+      var years = [];
+      this.props.months.forEach(function(e) {
+        var date = e.date;
+        var y = years[years.length - 1];
+        if (!y || y.year != date.getFullYear()) {
+          years.push({year: date.getFullYear(), months: [date]});
+        } else {
+          y.months.push(date);
+        }
+      });
+      var items = years.map(function(y) {
+        var ms = y.months.map(function(date) {
+            return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
+        }.bind(this));
+        return (
+          <li key={y.year}>
+            {y.year}/
+            <ul className="nav-months">{ms}</ul>
+          </li>
+        );
       }.bind(this));
-      var months = (
-        <ul className="months">
+      months = (
+        <ul className="nav-years">
           {items}
         </ul>
       );
