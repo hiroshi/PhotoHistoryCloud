@@ -12,6 +12,13 @@ A way to see photos in Google Drive
 -- iPad 2 - rendering is slow.
 
 
+## Known Issues
+- If a photo has creation date in both EXIF and TIFF, the one in TIFF may be used. This seems to be a spec of Google Drive API imageMediaMetadata.date.
+
+
+
+
+
 ## A guide for seting up your own Google Cloud Project
 
 I'm not sure all these steps are must be. Feedback welcome to be clearer.
