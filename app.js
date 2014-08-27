@@ -265,7 +265,7 @@ var PhotoApp = React.createClass({
       var img = null;
       if (this.state.visibleThumbIndex <= index && index < this.state.visibleThumbIndex + this.state.visibleThumbCount) {
         var meta = item.imageMediaMetadata;
-        var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation == 1);
+        var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
         var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
         var dateLabel = item._date.toLocaleDateString();
         img = (
