@@ -119,6 +119,7 @@ var PhotoStore = {
             this.callbackUpdate({loading: false});
           }
         } else {
+          // No images found.
           this.callbackUpdate({loading: false});
         }
       }.bind(this));
@@ -226,7 +227,7 @@ var PhotoApp = React.createClass({
     PhotoStore.registerUpdate(function(updates) {
       this.setState(updates);
     }.bind(this));
-    window.addEventListener('scroll', function(e) {
+    var _updatePosition = function() {
        //var y = window.scrollY;
       //console.log(window.scrollY);
       //var document.getElementsByClassName('thumb')[0]
@@ -240,6 +241,15 @@ var PhotoApp = React.createClass({
       thumbIndex = Math.min(Math.max(0, thumbIndex), total - 1);
       //console.log("num: " + numDisplay + " index: " + thumbIndex);
       this.setState({visibleThumbCount: numDisplay, visibleThumbIndex: thumbIndex});
+    }.bind(this);
+    var timeoutId = null;
+    window.addEventListener('scroll', function(e) {
+      if (!timeoutId) {
+        timeoutId = setTimeout(function() {
+          _updatePosition();
+          timeoutId = null;
+        }, 300);
+      }
     }.bind(this));
   },
   // _handleScroll: function(event) {
