@@ -274,6 +274,7 @@ var PhotoApp = React.createClass({
             <div className="label">{dateLabel}</div>
           </div>
         );
+        // <span className="hidden">{meta}</span>
       }
       return (
         <div key={item.id} className="thumb">
