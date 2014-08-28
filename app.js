@@ -193,9 +193,20 @@ var Navigation = React.createClass({
         }
       });
       var items = years.map(function(y) {
-        var ms = y.months.map(function(date) {
-            return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
-        }.bind(this));
+        var ms = [];
+        var i = 0;
+        for (var m = 0; m < 12; m++) {
+          var date = y.months[i];
+          if (date && date.getMonth() == m) {
+            ms.push(<NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />);
+            i++;
+          } else {
+            ms.push(<li key={y.year + "-" + (m + 1)} className="hidden">{m + 1}</li>);
+          }
+        }
+        // var ms = y.months.map(function(date) {
+        //     return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
+        // }.bind(this));
         return (
           <li key={y.year}>
             {y.year}/
@@ -332,7 +343,7 @@ var PhotoApp = React.createClass({
             <div className="label">{dateLabel}</div>
           </div>
         );
-        // <span className="hidden">{meta}</span>
+        // <span className="none">{meta}</span>
         thumbs.push(
           <div key={item.id} className="thumb">
             <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
