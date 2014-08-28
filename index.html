@@ -94,6 +94,12 @@
         display: inline-block;
         margin-right: 0.4em;
       }
+      .thumbs {
+        position: relative;
+      }
+      .thumbs > .visible {
+        position: relative;
+      }
       .thumb { 
         width: 72px;
         height: 72px;
@@ -101,6 +107,10 @@
         position: relative;
         margin: 2px;
         display: inline-block;
+      }
+      .thumb#thumb-size-sample {
+        position: fixed;
+        visibility: "hidden";
       }
       .thumb img {
         position: absolute;

@@ -212,6 +212,28 @@ var Navigation = React.createClass({
   }
 });
 
+function getThumbHeight() {
+  var thumbMargins = 4;
+  var thumb = document.getElementById('thumb-size-sample');
+  if (thumb) {
+    return thumb.clientHeight + thumbMargins;
+  }
+  return 0;
+}
+
+function getCols() {
+  var thumbMargins = 4;
+  var thumb = document.getElementById('thumb-size-sample');
+  if (thumb) {
+    return Math.floor(document.body.offsetWidth / (thumb.clientWidth + thumbMargins));
+  }
+  return 0;
+}
+
+function isiOS() {
+    return /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
+}
+
 var PhotoApp = React.createClass({
   getInitialState: function() {
     return {
@@ -236,19 +258,27 @@ var PhotoApp = React.createClass({
       var contentH = document.body.offsetHeight;
       var frameH = window.innerHeight;
       var range = 2;
+      var cols = getCols();
       var numDisplay = Math.floor(range * total * frameH / contentH);
+      numDisplay = Math.floor(numDisplay / cols) * cols;
       var thumbIndex = Math.floor((total * window.scrollY / contentH) - (numDisplay - numDisplay/range) / 2);
+      thumbIndex = Math.floor(thumbIndex / cols) * cols;
       thumbIndex = Math.min(Math.max(0, thumbIndex), total - 1);
       //console.log("num: " + numDisplay + " index: " + thumbIndex);
       this.setState({visibleThumbCount: numDisplay, visibleThumbIndex: thumbIndex});
     }.bind(this);
     var timeoutId = null;
     window.addEventListener('scroll', function(e) {
-      if (!timeoutId) {
-        timeoutId = setTimeout(function() {
-          _updatePosition();
-          timeoutId = null;
-        }, 300);
+      if (isiOS()) {
+        // No need to delay, because onScroll only fire end of scroll on iOS.
+        _updatePosition();
+      } else {
+        if (!timeoutId) {
+          timeoutId = setTimeout(function() {
+            _updatePosition();
+            timeoutId = null;
+          }, 300);
+        }
       }
     }.bind(this));
   },
@@ -270,32 +300,41 @@ var PhotoApp = React.createClass({
     // var monthNodes = this.state.months.map(function(m) {
     //   return <MonthLabel month={m} selectDate={this.selectDate} />;
     // }.bind(this));
-    //var thumbs = "";
-    var thumbs = this.state.items.map(function(item, index) {
-      var img = null;
-      if (this.state.visibleThumbIndex <= index && index < this.state.visibleThumbIndex + this.state.visibleThumbCount) {
+    var thumbs = [];
+    //var thumbs = this.state.items.map(function(item, index) {
+    var count = this.state.items.length;
+    var cols = getCols();
+    var thumbs_style = {
+      'height': Math.ceil(count / cols) * getThumbHeight(),
+    };
+    var visible_style = {
+      'padding-top': Math.floor(this.state.visibleThumbIndex / cols) * getThumbHeight(),
+    };
+    for (var i = 0; i < this.state.visibleThumbCount; i++) {
+      //if (this.state.visibleThumbIndex <= index && index < this.state.visibleThumbIndex + this.state.visibleThumbCount) {
+        var item = this.state.items[this.state.visibleThumbIndex + i];
+      if (item) {
         var meta = item.imageMediaMetadata;
         var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
         var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
         var dateLabel = item._date.toLocaleDateString();
-        img = (
+        var img = (
           <div>
             <img src={item.thumbnailLink} style={imgStyle} />
             <div className="label">{dateLabel}</div>
           </div>
         );
         // <span className="hidden">{meta}</span>
+        thumbs.push(
+          <div key={item.id} className="thumb">
+            <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
+              {img}
+            </a>
+          </div>
+        );
       }
-      return (
-        <div key={item.id} className="thumb">
-          <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
-            {img}
-          </a>
-        </div>
-      );
-    }.bind(this));
+    }
     var loading = this.state.loading ? "loading..." : "";
-    var count = this.state.items.length;
     if (!this.state.items.length && !this.state.loading) {
         count = (
           <span>
@@ -308,9 +347,12 @@ var PhotoApp = React.createClass({
          <Navigation index={this.state.visibleThumbIndex} months={this.state.months} />
          {user}
          <h1>Photos: {count} {loading}</h1>
-         <div>
-           {thumbs}
-         </div>
+         <div className="thumbs" style={thumbs_style}>
+           <div className="visible" style={visible_style}>
+             <div className="thumb" id="thumb-size-sample"></div>
+             {thumbs}
+           </div>
+          </div>
        </div>
     );
   }
