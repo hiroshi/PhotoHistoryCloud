@@ -178,7 +178,8 @@ var Navigation = React.createClass({
     var current = null;
     if (item) {
       var date = item._date;
-      current = <a href='#' onClick={this._handleClick}>{date.toLocaleDateString()}</a>;
+      var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
+      current = <a href='#' onClick={this._handleClick}>{text}</a>;
     }
     var months = null;
     if (this.state.open) {
@@ -336,7 +337,8 @@ var PhotoApp = React.createClass({
         var meta = item.imageMediaMetadata;
         var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
         var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
-        var dateLabel = item._date.toLocaleDateString();
+        var date = item._date;
+        var dateLabel = date.toLocaleDateString().match(/\d+[\/年](\d+[\/月]\d+(?:日)?)/)[1] + " " + date.toLocaleTimeString().match(/\d+:\d+/)[0];
         var img = (
           <div>
             <img src={item.thumbnailLink} style={imgStyle} />
