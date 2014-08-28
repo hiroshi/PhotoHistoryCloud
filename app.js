@@ -128,20 +128,28 @@ var PhotoStore = {
     this.callbackUpdate({loading: true});
     _retrieve(gapi.client.drive.files.list(options));
   },
-  getItemsSince: function(date) {
-    var index = 0;
-    binSearch(this.items, function(e) {
-      return e._date - date;
-    }, {atIndex: function(i) {
-      index = i;
-    }});
-    return this.items.slice(index, index + 50);
-  }
+  // getItemsSince: function(date) {
+  //   var index = 0;
+  //   binSearch(this.items, function(e) {
+  //     return e._date - date;
+  //   }, {atIndex: function(i) {
+  //     index = i;
+  //   }});
+  //   return this.items.slice(index, index + 50);
+  // }
 };
 
 var NavMonth = React.createClass({
   _handleClick: function() {
+    var index = null;
+    binSearch(PhotoStore.items, function(e) {
+      return e._date - this.props.date;
+    }.bind(this), {atIndex: function(i) {
+      index = i;
+    }});
+    window.scrollTo(0, document.body.offsetHeight * index / PhotoStore.items.length);
     this.props.toggleNav();
+    return false;
   },
   render: function() {
     return (
@@ -285,9 +293,9 @@ var PhotoApp = React.createClass({
   // _handleScroll: function(event) {
   //   console.log(event.target.scrollTop);
   // },
-  selectDate: function(date) {
-    this.setState({items: PhotoStore.getItemsSince(date)});
-  },
+  // selectDate: function(date) {
+  //   this.setState({items: PhotoStore.getItemsSince(date)});
+  // },
   render: function () {
     var user = null
     if (this.state.email) {
