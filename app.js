@@ -26,6 +26,10 @@ function binSearch(list, compare, options) {
   return found;
 }
 
+function isiOS() {
+    return /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
+}
+
 function begginingOfMonth(d) {
   //var n = new Date(d.getTime());
   // var n = new Date(d.getFullYear(), d.getMonth())
@@ -48,6 +52,27 @@ function yearMonthString(d) {
   //return d.toISOString().match(/\d+-\d+/)[0];
   return d.getFullYear() + "-" + ('0' + (d.getMonth() + 1)).slice(-2);
 }
+
+function getThumbHeight() {
+  var thumbMargins = 4;
+  var thumb = document.getElementById('thumb-size-sample');
+  if (thumb) {
+    return thumb.clientHeight + thumbMargins;
+  }
+  return 0;
+}
+
+function getCols() {
+  var thumbMargins = 4;
+  var thumb = document.getElementById('thumb-size-sample');
+  if (thumb) {
+    return Math.floor(document.body.offsetWidth / (thumb.clientWidth + thumbMargins));
+  }
+  return 0;
+}
+
+
+
 
 var PhotoStore = {
   items: [], // [{..., _date}]
@@ -237,27 +262,51 @@ var Navigation = React.createClass({
   }
 });
 
-function getThumbHeight() {
-  var thumbMargins = 4;
-  var thumb = document.getElementById('thumb-size-sample');
-  if (thumb) {
-    return thumb.clientHeight + thumbMargins;
+var Thumbnails = React.createClass({
+  render: function() {
+    var total = this.props.items.length;
+    var cols = getCols();
+    var thumbs = [];
+    var thumbs_style = {
+      'height': Math.ceil(total / cols) * getThumbHeight(),
+    };
+    var visible_style = {
+      'padding-top': this.props.startRow * getThumbHeight(),
+    };
+    for (var i = 0; i < (this.props.rowCount * cols); i++) {
+      var item = this.props.items[(this.props.startRow * cols) + i];
+      if (item) {
+        var meta = item.imageMediaMetadata;
+        var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
+        var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
+        var date = item._date;
+        var dateLabel = shortDateTimeString(date);
+        var img = (
+          <div>
+            <img src={item.thumbnailLink} style={imgStyle} />
+            <div className="label">{dateLabel}</div>
+          </div>
+        );
+        // <span className="none">{meta}</span>
+        thumbs.push(
+          <div key={item.id} className="thumb">
+            <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
+              {img}
+            </a>
+          </div>
+        );
+      }
+    }
+    return (
+       <div className="thumbs" style={thumbs_style}>
+         <div className="visible" style={visible_style}>
+           <div className="thumb" id="thumb-size-sample"></div>
+           {thumbs}
+         </div>
+       </div>
+    );
   }
-  return 0;
-}
-
-function getCols() {
-  var thumbMargins = 4;
-  var thumb = document.getElementById('thumb-size-sample');
-  if (thumb) {
-    return Math.floor(document.body.offsetWidth / (thumb.clientWidth + thumbMargins));
-  }
-  return 0;
-}
-
-function isiOS() {
-    return /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
-}
+});
 
 var PhotoApp = React.createClass({
   getInitialState: function() {
@@ -307,12 +356,6 @@ var PhotoApp = React.createClass({
       }
     }.bind(this));
   },
-  // _handleScroll: function(event) {
-  //   console.log(event.target.scrollTop);
-  // },
-  // selectDate: function(date) {
-  //   this.setState({items: PhotoStore.getItemsSince(date)});
-  // },
   render: function () {
     var user = null
     if (this.state.email) {
@@ -321,44 +364,6 @@ var PhotoApp = React.createClass({
           <span>{this.state.email}</span> (<a href="https://accounts.google.com/logout">logout</a>)
         </div>
       );
-    }
-    // var monthNodes = this.state.months.map(function(m) {
-    //   return <MonthLabel month={m} selectDate={this.selectDate} />;
-    // }.bind(this));
-    var thumbs = [];
-    //var thumbs = this.state.items.map(function(item, index) {
-    var count = this.state.items.length;
-    var cols = getCols();
-    var thumbs_style = {
-      'height': Math.ceil(count / cols) * getThumbHeight(),
-    };
-    var visible_style = {
-      'padding-top': Math.floor(this.state.visibleThumbIndex / cols) * getThumbHeight(),
-    };
-    for (var i = 0; i < this.state.visibleThumbCount; i++) {
-      //if (this.state.visibleThumbIndex <= index && index < this.state.visibleThumbIndex + this.state.visibleThumbCount) {
-        var item = this.state.items[this.state.visibleThumbIndex + i];
-      if (item) {
-        var meta = item.imageMediaMetadata;
-        var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
-        var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
-        var date = item._date;
-        var dateLabel = shortDateTimeString(date);
-        var img = (
-          <div>
-            <img src={item.thumbnailLink} style={imgStyle} />
-            <div className="label">{dateLabel}</div>
-          </div>
-        );
-        // <span className="none">{meta}</span>
-        thumbs.push(
-          <div key={item.id} className="thumb">
-            <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
-              {img}
-            </a>
-          </div>
-        );
-      }
     }
     var loading = this.state.loading ? "loading..." : "";
     if (!this.state.items.length && !this.state.loading) {
@@ -372,13 +377,11 @@ var PhotoApp = React.createClass({
        <div>
          <Navigation index={this.state.visibleThumbIndex} months={this.state.months} />
          {user}
-         <h1>Photos: {count} {loading}</h1>
-         <div className="thumbs" style={thumbs_style}>
-           <div className="visible" style={visible_style}>
-             <div className="thumb" id="thumb-size-sample"></div>
-             {thumbs}
-           </div>
-          </div>
+         <h1>Photos: {this.state.items.length} {loading}</h1>
+         <Thumbnails
+           items={this.state.items}
+           startRow={this.state.visibleThumbIndex / getCols()}
+           rowCount={this.state.visibleThumbCount / getCols()} />
        </div>
     );
   }
