@@ -39,6 +39,11 @@ function nextMonth(d) {
   return n;
 }
 
+function shortDateTimeString(d) {
+  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return (d.getMonth() + 1) + "/" + d.getDate() + " " + days[d.getDay()] + " " + d.getHours() + ":" + d.getMinutes();
+}
+
 function yearMonthString(d) {
   //return d.toISOString().match(/\d+-\d+/)[0];
   return d.getFullYear() + "-" + ('0' + (d.getMonth() + 1)).slice(-2);
@@ -338,7 +343,7 @@ var PhotoApp = React.createClass({
         var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
         var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
         var date = item._date;
-        var dateLabel = date.toLocaleDateString().match(/\d+[\/年](\d+[\/月]\d+(?:日)?)/)[1] + " " + date.toLocaleTimeString().match(/\d+:\d+/)[0];
+        var dateLabel = shortDateTimeString(date);
         var img = (
           <div>
             <img src={item.thumbnailLink} style={imgStyle} />
