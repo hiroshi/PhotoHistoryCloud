@@ -130,15 +130,21 @@
         width: 100%;
         left: 0;
         bottom: 0;
+        padding: 0 4px;
+        font-size: small;
       }
       @media (min-width:768px) {
         .thumb {
           width: 120px;
           height: 120px;
         }
-        .thumb .label {
-          padding: 0 4px;
-          font-size: small;
+      }
+      @media (max-width:767px) {
+        .thumb {
+          /*width: 72px;
+          height: 72px;*/
+          width: 97px;
+          height: 97px;
         }
       }
       .hidden {
@@ -146,16 +152,6 @@
       }
       .none {
         display: none;
-      }
-      @media (max-width:767px) {
-        .thumb {
-          width: 72px;
-          height: 72px;
-        }
-        .thumb .label {
-          padding: 0 3px;
-          font-size: x-small;
-        }
       }
     </style>
   </head>
