@@ -192,6 +192,62 @@ var NavMonth = React.createClass({
   }
 });
 
+var NavAccount = React.createClass({
+  render: function() {
+    if (this.props.email) {
+      return <span className="account"><a href="#">{this.props.email}</a></span>;
+    } else {
+      return <span className="account"><a href="#">Login</a></span>;
+    }
+  }
+});
+
+var NavMonths = React.createClass({
+  render: function() {
+    if (this.props.open) {
+      var years = [];
+      this.props.months.forEach(function(e) {
+        var date = e.date;
+        var y = years[years.length - 1];
+        if (!y || y.year != date.getFullYear()) {
+          years.push({year: date.getFullYear(), months: [date]});
+        } else {
+          y.months.push(date);
+        }
+      });
+      var items = years.map(function(y) {
+        var ms = [];
+        var i = 0;
+        for (var m = 0; m < 12; m++) {
+          var date = y.months[i];
+          if (date && date.getMonth() == m) {
+            ms.push(<NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.props.toggleNav} />);
+            i++;
+          } else {
+            ms.push(<li key={y.year + "-" + (m + 1)} className="hidden">{m + 1}</li>);
+          }
+        }
+        // var ms = y.months.map(function(date) {
+        //     return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
+        // }.bind(this));
+        return (
+          <li key={y.year}>
+            {y.year}/
+            <ul className="nav-months">{ms}</ul>
+          </li>
+        );
+      }.bind(this));
+      return (
+        <ul className="nav-years">
+          {items}
+        </ul>
+      );
+    }
+    return <div></div>;
+  }
+});
+
+
 var Navigation = React.createClass({
   getInitialState: function() {
     return {open: false};
@@ -211,52 +267,18 @@ var Navigation = React.createClass({
       var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
       current = <a href='#' onClick={this._handleClick}>{text}</a>;
     }
-    var months = null;
-    if (this.state.open) {
-      var years = [];
-      this.props.months.forEach(function(e) {
-        var date = e.date;
-        var y = years[years.length - 1];
-        if (!y || y.year != date.getFullYear()) {
-          years.push({year: date.getFullYear(), months: [date]});
-        } else {
-          y.months.push(date);
-        }
-      });
-      var items = years.map(function(y) {
-        var ms = [];
-        var i = 0;
-        for (var m = 0; m < 12; m++) {
-          var date = y.months[i];
-          if (date && date.getMonth() == m) {
-            ms.push(<NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />);
-            i++;
-          } else {
-            ms.push(<li key={y.year + "-" + (m + 1)} className="hidden">{m + 1}</li>);
-          }
-        }
-        // var ms = y.months.map(function(date) {
-        //     return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
-        // }.bind(this));
-        return (
-          <li key={y.year}>
-            {y.year}/
-            <ul className="nav-months">{ms}</ul>
-          </li>
-        );
-      }.bind(this));
-      months = (
-        <ul className="nav-years">
-          {items}
-        </ul>
-      );
-    }
+    var loading = this.props.loading ? "loading…" : "";
     return (
       <div className="navigation">
         <div>
-          {current}
-          {months}
+          <ul className="nav-items">
+            <li>{current}</li>
+            <li>{this.props.count} photos</li>
+            <li>{loading}</li>
+          </ul>
+          <NavAccount email={this.props.email} />
         </div>
+        <NavMonths open={this.state.open} months={this.props.months} toggleNav={this.toggleNav} />
       </div>
     );
   }
@@ -357,15 +379,15 @@ var PhotoApp = React.createClass({
     }.bind(this));
   },
   render: function () {
-    var user = null
-    if (this.state.email) {
-      user = (
-        <div>
-          <span>{this.state.email}</span> (<a href="https://accounts.google.com/logout">logout</a>)
-        </div>
-      );
-    }
-    var loading = this.state.loading ? "loading..." : "";
+    // var user = null
+    // if (this.state.email) {
+    //   user = (
+    //     <div>
+    //       <span>{this.state.email}</span> (<a href="https://accounts.google.com/logout">logout</a>)
+    //     </div>
+    //   );
+    // }
+    //var loading = this.state.loading ? "loading..." : "";
     if (!this.state.items.length && !this.state.loading) {
         count = (
           <span>
@@ -375,15 +397,19 @@ var PhotoApp = React.createClass({
     }
     return (
        <div>
-         <Navigation index={this.state.visibleThumbIndex} months={this.state.months} />
-         {user}
-         <h1>Photos: {this.state.items.length} {loading}</h1>
+         <Navigation
+           index={this.state.visibleThumbIndex}
+           months={this.state.months}
+           count={this.state.items.length}
+           loading={this.state.loading}
+           email={this.state.email} />
          <Thumbnails
            items={this.state.items}
            startRow={this.state.visibleThumbIndex / getCols()}
            rowCount={this.state.visibleThumbCount / getCols()} />
        </div>
     );
+    //<h1>Photos: {this.state.items.length} {loading}</h1>
   }
 });
 

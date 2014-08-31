@@ -65,7 +65,8 @@
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
+        right: 0;
+        /*width: 100%;*/
         max-height: 100%;
         color: white;
         background-color: black;
@@ -79,7 +80,17 @@
       }
       .navigation a {
         color: inherit;
-        text-decoration: none;
+        /*text-decoration: none;*/
+      }
+      .navigation ul.nav-items {
+        display: inline-block;
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+      .navigation ul.nav-items > li {
+        display: inline-block;
+        margin-right: 0.4em;
       }
       .navigation ul.nav-years {
         list-style: none;
@@ -93,6 +104,9 @@
       .navigation ul.nav-months > li {
         display: inline-block;
         margin-right: 0.4em;
+      }
+      .navigation .account {
+        float: right;
       }
       .thumbs {
         position: relative;
