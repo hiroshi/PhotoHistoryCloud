@@ -193,12 +193,27 @@ var NavMonth = React.createClass({
 });
 
 var NavAccount = React.createClass({
+  getInitialState: function() {
+    return {open: false};
+  },
+  toggle: function() {
+    this.setState({open: !this.state.open});
+  },
   render: function() {
+    var results = []
     if (this.props.email) {
-      return <span className="account"><a href="#">{this.props.email}</a></span>;
+      results.push(<a href="#" onClick={this.toggle}>@</a>);
     } else {
-      return <span className="account"><a href="#">Login</a></span>;
+      results.push(<a href="#">Login</a>);
     }
+    if (this.state.open) {
+      results.push(
+        <ul>
+          <li><a href="#" onClick={this.toggle}>{this.props.email}</a></li>
+        </ul>
+      );
+    }
+    return <div className="account">{results}</div>;
   }
 });
 
