@@ -58,6 +58,9 @@
     </script>
     <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
     <style>
+      .pull-right {
+        float: right;
+      }
       .container {
         padding-top: 40px;
       }
@@ -82,36 +85,27 @@
         color: inherit;
         /*text-decoration: none;*/
       }
-      .navigation ul.nav-items {
-        display: inline-block;
+      .navigation ul {
         list-style: none;
         padding-left: 0;
         margin: 0;
+      }
+      .navigation ul.nav-items {
+        display: inline-block;
       }
       .navigation ul.nav-items > li {
         display: inline-block;
         margin-right: 0.4em;
       }
-      .navigation ul.nav-years {
-        list-style: none;
-        padding-left: 0;
-      }
       .navigation ul.nav-months {
-        list-style: none;
         display: inline-block;
-        padding-left: 0;
       }
       .navigation ul.nav-months > li {
         display: inline-block;
         margin-right: 0.4em;
       }
-      .navigation .account {
-        float: right;
+      .navigation ul.menu {
         text-align: right;
-      }
-      .navigation .account ul {
-        list-style: none;
-        padding-left: 0;
       }
       .thumbs {
         position: relative;

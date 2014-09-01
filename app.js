@@ -192,28 +192,13 @@ var NavMonth = React.createClass({
   }
 });
 
-var NavAccount = React.createClass({
-  getInitialState: function() {
-    return {open: false};
-  },
-  toggle: function() {
-    this.setState({open: !this.state.open});
-  },
+var NavMenu = React.createClass({
   render: function() {
-    var results = []
-    if (this.props.email) {
-      results.push(<a href="#" onClick={this.toggle}>@</a>);
-    } else {
-      results.push(<a href="#">Login</a>);
-    }
-    if (this.state.open) {
-      results.push(
-        <ul>
-          <li><a href="#" onClick={this.toggle}>{this.props.email}</a></li>
-        </ul>
-      );
-    }
-    return <div className="account">{results}</div>;
+    return (
+      <ul className="menu">
+        <li><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>
+      </ul>
+    );
   }
 });
 
@@ -274,6 +259,13 @@ var Navigation = React.createClass({
   toggleNav: function() {
     this.setState({open: !this.state.open});
   },
+  _handleClickMenu: function() {
+    this.toggleMenu();
+    return false;
+  },
+  toggleMenu: function() {
+    this.setState({openMenu: !this.state.openMenu});
+  },
   render: function() {
     var item = PhotoStore.items[this.props.index];
     var current = null;
@@ -283,6 +275,10 @@ var Navigation = React.createClass({
       current = <a href='#' onClick={this._handleClick}>{text}</a>;
     }
     var loading = this.props.loading ? "loading…" : "";
+    var opens = [];
+    if (this.state.openMenu) {
+      opens.push(<NavMenu email={this.props.email} toggle={this.toggleMenu} />);
+    }
     return (
       <div className="navigation">
         <div>
@@ -291,9 +287,12 @@ var Navigation = React.createClass({
             <li>{this.props.count} photos</li>
             <li>{loading}</li>
           </ul>
-          <NavAccount email={this.props.email} />
+          <ul className="nav-items pull-right">
+            <li><a href="#" onClick={this._handleClickMenu}>@</a></li>
+          </ul>
         </div>
         <NavMonths open={this.state.open} months={this.props.months} toggleNav={this.toggleNav} />
+        { opens }
       </div>
     );
   }
