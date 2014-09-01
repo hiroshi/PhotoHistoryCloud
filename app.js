@@ -178,7 +178,7 @@ var NavMonth = React.createClass({
       index = i;
     }});
     window.scrollTo(0, document.body.offsetHeight * index / PhotoStore.items.length);
-    this.props.toggleNav();
+    this.props.toggle();
     return false;
   },
   render: function() {
@@ -204,60 +204,57 @@ var NavMenu = React.createClass({
 
 var NavMonths = React.createClass({
   render: function() {
-    if (this.props.open) {
-      var years = [];
-      this.props.months.forEach(function(e) {
-        var date = e.date;
-        var y = years[years.length - 1];
-        if (!y || y.year != date.getFullYear()) {
-          years.push({year: date.getFullYear(), months: [date]});
+    var years = [];
+    this.props.months.forEach(function(e) {
+      var date = e.date;
+      var y = years[years.length - 1];
+      if (!y || y.year != date.getFullYear()) {
+        years.push({year: date.getFullYear(), months: [date]});
+      } else {
+        y.months.push(date);
+      }
+    });
+    var items = years.map(function(y) {
+      var ms = [];
+      var i = 0;
+      for (var m = 0; m < 12; m++) {
+        var date = y.months[i];
+        if (date && date.getMonth() == m) {
+          ms.push(<NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggle={this.props.toggle} />);
+          i++;
         } else {
-          y.months.push(date);
+          ms.push(<li key={y.year + "-" + (m + 1)} className="hidden">{m + 1}</li>);
         }
-      });
-      var items = years.map(function(y) {
-        var ms = [];
-        var i = 0;
-        for (var m = 0; m < 12; m++) {
-          var date = y.months[i];
-          if (date && date.getMonth() == m) {
-            ms.push(<NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.props.toggleNav} />);
-            i++;
-          } else {
-            ms.push(<li key={y.year + "-" + (m + 1)} className="hidden">{m + 1}</li>);
-          }
-        }
-        // var ms = y.months.map(function(date) {
-        //     return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
-        // }.bind(this));
-        return (
-          <li key={y.year}>
-            {y.year}/
-            <ul className="nav-months">{ms}</ul>
-          </li>
-        );
-      }.bind(this));
+      }
+      // var ms = y.months.map(function(date) {
+      //     return <NavMonth key={yearMonthString(date)} date={date} title={date.getMonth() + 1} toggleNav={this.toggleNav} />;
+      // }.bind(this));
       return (
-        <ul className="nav-years">
-          {items}
-        </ul>
+        <li key={y.year}>
+          {y.year}/
+          <ul className="nav-months">{ms}</ul>
+        </li>
       );
-    }
-    return <div></div>;
+    }.bind(this));
+    return (
+      <ul className="nav-years">
+        {items}
+      </ul>
+    );
   }
 });
 
 
 var Navigation = React.createClass({
   getInitialState: function() {
-    return {open: false};
+    return {openMonths: false};
   },
   _handleClick: function() {
-    this.toggleNav();
+    this.toggleMonths();
     return false;
   },
-  toggleNav: function() {
-    this.setState({open: !this.state.open});
+  toggleMonths: function() {
+    this.setState({openMonths: !this.state.openMonths});
   },
   _handleClickMenu: function() {
     this.toggleMenu();
@@ -276,6 +273,9 @@ var Navigation = React.createClass({
     }
     var loading = this.props.loading ? "loading…" : "";
     var opens = [];
+    if (this.state.openMonths) {
+      opens.push(<NavMonths months={this.props.months} toggle={this.toggleMonths} />);
+    }
     if (this.state.openMenu) {
       opens.push(<NavMenu email={this.props.email} toggle={this.toggleMenu} />);
     }
@@ -291,7 +291,6 @@ var Navigation = React.createClass({
             <li><a href="#" onClick={this._handleClickMenu}>@</a></li>
           </ul>
         </div>
-        <NavMonths open={this.state.open} months={this.props.months} toggleNav={this.toggleNav} />
         { opens }
       </div>
     );
