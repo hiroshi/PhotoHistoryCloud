@@ -221,9 +221,14 @@ var NavMonth = React.createClass({
 
 var NavMenu = React.createClass({
   render: function() {
+    var items = [];
+    if (this.props.email) {
+      items.push(<li><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>);
+    }
+    items.push(<li><a href="./doc" target="_blank">Document</a></li>);
     return (
       <ul className="menu">
-        <li><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>
+        { items }
       </ul>
     );
   }
