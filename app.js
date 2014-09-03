@@ -114,7 +114,7 @@ var PhotoStore = {
   load: function() {
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
-      fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink),nextPageToken",
+      fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink,modifiedDate),nextPageToken",
       maxResults: 1000
     };
     var _retrieve = function(request) {
@@ -130,6 +130,8 @@ var PhotoStore = {
               if (m) {
                 dateString = m[1] + "/" + m[2] + "/" + m[3];
               }
+            } else {
+              dateString = item.modifiedDate;
             }
             item._date = dateString ? new Date(dateString) : new Date();
             binSearch(items, function(e) {
