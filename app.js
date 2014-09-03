@@ -299,8 +299,8 @@ var Navigation = React.createClass({
   render: function() {
     var items = [];
     if (this.props.email) {
-      var item = PhotoStore.items[this.props.index];
-      var current = null;
+      var index = Math.floor(PhotoStore.items.length * window.scrollY / document.body.offsetHeight);
+      var item = PhotoStore.items[index];
       if (item) {
         var date = item._date;
         var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
