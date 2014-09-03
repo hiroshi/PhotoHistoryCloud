@@ -188,6 +188,8 @@ var Account = {
         });
         PhotoStore.load();
       });
+    } else {
+      App.setState({authFailed: true})
     }
   }
 };
@@ -308,7 +310,7 @@ var Navigation = React.createClass({
       if (this.props.loading) {
         items.push(<li>loading...</li>);
       }
-    } else {
+    } else if (this.props.authFailed) {
       items.push(<li><Login /></li>);
     }
     var opens = [];
@@ -452,6 +454,7 @@ var PhotoApp = React.createClass({
            months={this.state.months}
            count={this.state.items.length}
            loading={this.state.loading}
+           authFailed={this.state.authFailed}
            email={this.state.email} />
          <Thumbnails
            items={this.state.items}
