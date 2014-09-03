@@ -7,172 +7,26 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/react-with-addons.js"></script>
     <!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/react-with-addons.min.js"></script>-->
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/JSXTransformer.js"></script>
+    <link href="./app.css" rel="stylesheet" type="text/css">
+    <script type="text/jsx" src="./app.js"></script>
     <script type="text/javascript">
       var CLIENT_ID = '270744618004-sc56ljkbn8tabp0beq43s09p9p37cnbl.apps.googleusercontent.com';
       var SCOPES = [
        'https://www.googleapis.com/auth/drive.readonly',
-     ].join(" ");
+       ].join(" ");
 
-      /**
-       * Called when the client library is loaded to start the auth flow.
-       */
       function handleClientLoad() {
-        window.setTimeout(checkAuth, 1);
-      }
-
-      /**
-       * Check if the current user has authorized the application.
-       */
-      function checkAuth() {
-        gapi.auth.authorize(
-            {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true},
-            handleAuthResult);
-      }
-
-      /**
-       * Called when authorization server replies.
-       *
-       * @param {Object} authResult Authorization result.
-       */
-      function handleAuthResult(authResult) {
-        var authButton = document.getElementById('authorizeButton');
-        authButton.style.display = 'none';
-        if (authResult && !authResult.error) {
-          // Access token has been successfully retrieved, requests can be sent to the API.
-          gapi.client.load('drive', 'v2', function() {
-            gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
-              App.setState({email: resp.user.emailAddress})
-            });
-            PhotoStore.load();
-          });
-        } else {
-          // No access token could be retrieved, show the button to start the authorization flow.
-          authButton.style.display = 'block';
-          authButton.onclick = function() {
-              gapi.auth.authorize(
-                  {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false},
-                  handleAuthResult);
-          };
-        }
+       window.setTimeout(function() {
+         Account.check();
+       }, 1);
       }
     </script>
     <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
-    <style>
-      .pull-right {
-        float: right;
-      }
-      .container {
-        padding-top: 40px;
-      }
-      .navigation {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        /*width: 100%;*/
-        max-height: 100%;
-        color: white;
-        background-color: black;
-        opacity: 0.8;
-        z-index: 1;
-        overflow: auto;
-
-        /*height: 30px;*/
-        font-size: 20px;
-        padding: 4px 12px;
-      }
-      .navigation a {
-        color: inherit;
-        /*text-decoration: none;*/
-      }
-      .navigation ul {
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-      }
-      .navigation ul.nav-items {
-        display: inline-block;
-      }
-      .navigation ul.nav-items > li {
-        display: inline-block;
-        margin-right: 0.4em;
-      }
-      .navigation ul.nav-months {
-        display: inline-block;
-      }
-      .navigation ul.nav-months > li {
-        display: inline-block;
-        margin-right: 0.4em;
-      }
-      .navigation ul.menu {
-        text-align: right;
-      }
-      .thumbs {
-        position: relative;
-      }
-      .thumbs > .visible {
-        position: relative;
-      }
-      .thumb { 
-        width: 72px;
-        height: 72px;
-        overflow: hidden;
-        position: relative;
-        margin: 2px;
-        display: inline-block;
-      }
-      .thumb#thumb-size-sample {
-        position: fixed;
-        visibility: "hidden";
-      }
-      .thumb img {
-        position: absolute;
-        left: -100%;
-        right: -100%;
-        top: -100%;
-        bottom: -100%;
-        margin: auto;
-        min-width: 100%;
-        min-height: 100%;
-      }
-      .thumb .label {
-        position: absolute;
-        color: white;
-        background-color: black;
-        opacity: 0.7;
-        width: 100%;
-        left: 0;
-        bottom: 0;
-        padding: 0 4px;
-        font-size: small;
-      }
-      @media (min-width:768px) {
-        .thumb {
-          width: 120px;
-          height: 120px;
-        }
-      }
-      @media (max-width:767px) {
-        .thumb {
-          /*width: 72px;
-          height: 72px;*/
-          width: 97px;
-          height: 97px;
-        }
-      }
-      .hidden {
-        visibility: hidden;
-      }
-      .none {
-        display: none;
-      }
-    </style>
   </head>
   <body>
     <div class="container">
       <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
       <div id="app"></div>
-      <script type="text/jsx" src="./app.js"></script>
     </div>
   </body>
 </html>

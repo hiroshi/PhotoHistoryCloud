@@ -169,6 +169,29 @@ var PhotoStore = {
   // }
 };
 
+var Account = {
+  check: function() {
+    gapi.auth.authorize(
+      {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true},
+      this._handleAuthResult);
+  },
+  authorize: function() {
+    gapi.auth.authorize(
+      {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false},
+      this._handleAuthResult);
+  },
+  _handleAuthResult: function(authResult) {
+    if (authResult && !authResult.error) {
+      gapi.client.load('drive', 'v2', function() {
+        gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
+          App.setState({email: resp.user.emailAddress})
+        });
+        PhotoStore.load();
+      });
+    }
+  }
+};
+
 var NavMonth = React.createClass({
   _handleClick: function() {
     var index = null;
@@ -244,6 +267,14 @@ var NavMonths = React.createClass({
   }
 });
 
+var Login = React.createClass({
+  _handleClick: function() {
+    Account.authorize();
+  },
+  render: function() {
+    return <a href="#" onClick={this._handleClick}>Login to access Google Drive</a>;
+  }
+});
 
 var Navigation = React.createClass({
   getInitialState: function() {
@@ -264,14 +295,22 @@ var Navigation = React.createClass({
     this.setState({openMenu: !this.state.openMenu});
   },
   render: function() {
-    var item = PhotoStore.items[this.props.index];
-    var current = null;
-    if (item) {
-      var date = item._date;
-      var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
-      current = <a href='#' onClick={this._handleClick}>{text}</a>;
+    var items = [];
+    if (this.props.email) {
+      var item = PhotoStore.items[this.props.index];
+      var current = null;
+      if (item) {
+        var date = item._date;
+        var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
+        items.push(<li><a href='#' onClick={this._handleClick}>{text}</a></li>);
+      }
+      items.push(<li>{this.props.count} photos</li>);
+      if (this.props.loading) {
+        items.push(<li>loading...</li>);
+      }
+    } else {
+      items.push(<li><Login /></li>);
     }
-    var loading = this.props.loading ? "loading…" : "";
     var opens = [];
     if (this.state.openMonths) {
       opens.push(<NavMonths months={this.props.months} toggle={this.toggleMonths} />);
@@ -283,9 +322,7 @@ var Navigation = React.createClass({
       <div className="navigation">
         <div>
           <ul className="nav-items">
-            <li>{current}</li>
-            <li>{this.props.count} photos</li>
-            <li>{loading}</li>
+            { items }
           </ul>
           <ul className="nav-items pull-right">
             <li><a href="#" onClick={this._handleClickMenu}>@</a></li>
@@ -430,3 +467,10 @@ window.App = React.renderComponent(
   <PhotoApp />,
   document.getElementById('app')
 );
+
+/*function handleClientLoad() {
+  window.setTimeout(function() {
+    Account.check();
+  }, 1);
+}*/
+
