@@ -334,7 +334,7 @@ var Navigation = React.createClass({
             { items }
           </ul>
           <ul className="nav-items pull-right">
-            <li><a href="#" onClick={this._handleClickMenu}>@</a></li>
+            <li><a href="#" onClick={this._handleClickMenu}>?</a></li>
           </ul>
         </div>
         { opens }
