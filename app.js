@@ -225,7 +225,8 @@ var NavMenu = React.createClass({
     if (this.props.email) {
       items.push(<li><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>);
     }
-    items.push(<li><a href="./doc" target="_blank">Document</a></li>);
+    items.push(<li><a href="./about" target="_blank">About</a></li>);
+    items.push(<li><a href="https://drive.google.com/" target="_blank">Google Drive</a></li>);
     return (
       <ul className="menu">
         { items }
