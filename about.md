@@ -11,6 +11,11 @@ Known Issues
 - If a photo contains creation date in EXIF and TIFF, Google Drive seems to prefer TIFF.
 
 
+Contact
+-------
+- [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
+
+
 TODO
 ----
 - Google Calendar integration. (Jump to the photos on the day of an event.)
