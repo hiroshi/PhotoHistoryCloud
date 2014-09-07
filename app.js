@@ -71,7 +71,21 @@ function getCols() {
   return 0;
 }
 
-
+function repeatExecute(func, options, callback) {
+  func(options).execute(function(resp) {
+    callback(resp);
+    if (resp) {
+      if (resp.error) {
+        console.log(resp.error.message);
+      } else {
+        if (resp.nextPageToken) {
+          options.pageToken = resp.nextPageToken;
+          repeatExecute(func, options, callback);
+        }
+      }
+    }
+  });
+}
 
 
 var PhotoStore = {
@@ -117,48 +131,45 @@ var PhotoStore = {
       fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink,modifiedDate),nextPageToken",
       maxResults: 1000
     };
-    var _retrieve = function(request) {
-      request.execute(function(resp, rawResp) {
-        if (resp) {
-          var items = this.items;
-          resp.items.forEach(function(item) {
-            // imageMediaMetadata.date may be in '2014:08:13 17:57:04' format,
-            // so convert it to be able to be parsed as Date.
-            var dateString = item.imageMediaMetadata.date;
-            if (dateString) {
-              var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
-              if (m) {
-                dateString = m[1] + "/" + m[2] + "/" + m[3];
-              }
-            } else {
-              dateString = item.modifiedDate;
-            }
-            item._date = dateString ? new Date(dateString) : new Date();
-            binSearch(items, function(e) {
-              return e._date - item._date;
-            }, {atIndex: function(itemIndex) {
-              items.splice(itemIndex, 0, item);
-            }.bind(this)});
-          }.bind(this));
-          this.items = items;
-          this.updateMonths();
-          this.callbackUpdate({items: items, months: this.yearMonths});
-          if (resp.nextPageToken) {
-            options.pageToken = resp.nextPageToken;
-            _retrieve(gapi.client.drive.files.list(options));
-          } else {
-            // finish loading
-            this.callbackUpdate({loading: false});
-          }
-        } else {
-          // No images found.
-          this.callbackUpdate({loading: false});
-        }
-      }.bind(this));
-    }.bind(this);
     // satrt loading
     this.callbackUpdate({loading: true});
-    _retrieve(gapi.client.drive.files.list(options));
+    repeatExecute(gapi.client.drive.files.list, options, function(resp) {
+      if (resp) {
+        var items = this.items;
+        resp.items.forEach(function(item) {
+          // imageMediaMetadata.date may be in '2014:08:13 17:57:04' format,
+          // so convert it to be able to be parsed as Date.
+          var dateString = item.imageMediaMetadata.date;
+          if (dateString) {
+            var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
+            if (m) {
+              dateString = m[1] + "/" + m[2] + "/" + m[3];
+            }
+          } else {
+            dateString = item.modifiedDate;
+          }
+          item._date = dateString ? new Date(dateString) : new Date();
+          binSearch(items, function(e) {
+            return e._date - item._date;
+          }, {atIndex: function(itemIndex) {
+            items.splice(itemIndex, 0, item);
+          }.bind(this)});
+        }.bind(this));
+        this.items = items;
+        this.updateMonths();
+        this.callbackUpdate({items: items, months: this.yearMonths});
+        if (resp.nextPageToken) {
+          // options.pageToken = resp.nextPageToken;
+          // _retrieve(gapi.client.drive.files.list(options));
+        } else {
+          // finish loading
+          this.callbackUpdate({loading: false});
+        }
+      } else {
+        // No images found.
+        this.callbackUpdate({loading: false});
+      }
+    }.bind(this));
   },
   // getItemsSince: function(date) {
   //   var index = 0;
