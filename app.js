@@ -234,10 +234,10 @@ var NavMenu = React.createClass({
   render: function() {
     var items = [];
     if (this.props.email) {
-      items.push(<li><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>);
+      items.push(<li key="email"><a href="#" onClick={this.props.toggle}>{this.props.email}</a></li>);
     }
-    items.push(<li><a href="./about" target="_blank">About</a></li>);
-    items.push(<li><a href="https://drive.google.com/" target="_blank">Google Drive</a></li>);
+    items.push(<li key="about"><a href="./about" target="_blank">About</a></li>);
+    items.push(<li key="drive"><a href="https://drive.google.com/" target="_blank">Google Drive</a></li>);
     return (
       <ul className="menu">
         { items }
@@ -323,14 +323,14 @@ var Navigation = React.createClass({
       if (item) {
         var date = item._date;
         var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
-        items.push(<li><a href='#' onClick={this._handleClick}>{text}</a></li>);
+        items.push(<li key="current"><a href='#' onClick={this._handleClick}>{text}</a></li>);
       }
-      items.push(<li>{this.props.count} photos</li>);
+      items.push(<li key="count">{this.props.count} photos</li>);
       if (this.props.loading) {
-        items.push(<li>loading...</li>);
+        items.push(<li key="loading">loading...</li>);
       }
     } else if (this.props.authFailed) {
-      items.push(<li><Login /></li>);
+      items.push(<li key="login"><Login /></li>);
     }
     var opens = [];
     if (this.state.openMonths) {
