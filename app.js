@@ -71,9 +71,9 @@ function getCols() {
   return 0;
 }
 
+// Google Client SDK helpers
 function repeatExecute(func, options, callback) {
   func(options).execute(function(resp) {
-    callback(resp);
     if (resp) {
       if (resp.error) {
         console.log(resp.error.message);
@@ -84,6 +84,90 @@ function repeatExecute(func, options, callback) {
         }
       }
     }
+    callback(resp);
+  });
+}
+
+function promiseGAPIExecute(func, options) {
+  return Q.Promise(function(resolve, reject, notify) {
+    //do {
+      func(options).execute(function(resp) {
+        if (resp && resp.error) {
+          console.error(resp.error);
+          reject(resp.error);
+        }
+        if (resp) {
+          notify(resp);
+          options.pageToken = resp.nextPageToken;
+          if (resp.nextPageToken) {
+            promiseGAPIExecute(func, options).then(resolve, reject, notify);
+          } else {
+            resolve(resp);
+          }
+        } else {
+          resolve(resp);
+        }
+      });
+    //} while (options.pageToken);
+  });
+}
+
+/*
+  meta must contains 'title' and 'mimeType'.
+*/
+function promiseUpsertFile(meta, content) {
+  var conds = ["title = '" + meta.title + "'", "trashed = false"];
+  (meta.parents || []).forEach(function(parent) {
+    conds.push("'" + parent.id  + "' in parents")
+  });
+  var options = {
+    q: conds.join(' and '),
+    maxResults: 1,
+    fields: "items(id)",
+  };
+  return promiseGAPIExecute(gapi.client.drive.files.list, options)
+  .then(function(resp) {
+    var path = ['/upload/drive/v2/files'];
+    var method = 'POST';
+    if (resp && resp.items.length > 0) { // update
+      var fileId = resp.items[0].id;
+      console.log("fileId: " + fileId);
+      path.push(fileId);
+      method = 'PUT';
+    }
+    if (typeof(content) == 'object') {
+      content = JSON.stringify(content)
+    }
+    return Q.Promise(function(resolve, reject, notify) {
+      gapi.client.request({
+        path: path.join('/'),
+        method: method,
+        params: {'uploadType': 'multipart'},
+        headers: {
+          'Content-Type': 'multipart/mixed; boundary="boundary"'
+        },
+        body: [
+          "",
+          "--boundary",
+          "Content-Type: application/json",
+          "",
+          JSON.stringify(meta),
+          "",
+          "--boundary",
+          "Content-Type: " + meta.mimeType,
+          "",
+          content,
+          "--boundary--",
+        ].join("\r\n")
+      }).execute(function(resp) {
+        if (resp && resp.error) {
+          console.error(resp.error);
+          reject(resp.error);
+        } else {
+          resolve(resp);
+        }
+      });
+    });
   });
 }
 
@@ -126,6 +210,13 @@ var PhotoStore = {
     this.yearMonths = months;
   },
   load: function() {
+    // promiseUpsertFile(
+    //   {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
+    //   {date: new Date().toISOString()})
+    // .then(function(resp) {
+    //   console.log(resp);
+    // });
+    // return false;
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
       fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink,modifiedDate),nextPageToken",
@@ -133,7 +224,9 @@ var PhotoStore = {
     };
     // satrt loading
     this.callbackUpdate({loading: true});
-    repeatExecute(gapi.client.drive.files.list, options, function(resp) {
+    //repeatExecute(gapi.client.drive.files.list, options, function(resp) {
+    promiseGAPIExecute(gapi.client.drive.files.list, options)
+    .progress(function(resp) {
       if (resp) {
         var items = this.items;
         resp.items.forEach(function(item) {
@@ -163,12 +256,15 @@ var PhotoStore = {
           // _retrieve(gapi.client.drive.files.list(options));
         } else {
           // finish loading
-          this.callbackUpdate({loading: false});
+          //this.callbackUpdate({loading: false});
         }
-      } else {
-        // No images found.
-        this.callbackUpdate({loading: false});
+      // } else {
+      //   // No images found.
+      //   this.callbackUpdate({loading: false});
       }
+    }.bind(this))
+    .then(function(resp) {
+      this.callbackUpdate({loading: false});
     }.bind(this));
   },
   // getItemsSince: function(date) {
@@ -199,6 +295,7 @@ var Account = {
         gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
           App.setState({email: resp.user.emailAddress})
         });
+        console.log("load");
         PhotoStore.load();
       });
     } else {
