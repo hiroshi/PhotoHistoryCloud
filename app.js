@@ -72,43 +72,26 @@ function getCols() {
 }
 
 // Google Client SDK helpers
-function repeatExecute(func, options, callback) {
-  func(options).execute(function(resp) {
-    if (resp) {
-      if (resp.error) {
-        console.log(resp.error.message);
-      } else {
-        if (resp.nextPageToken) {
-          options.pageToken = resp.nextPageToken;
-          repeatExecute(func, options, callback);
-        }
-      }
-    }
-    callback(resp);
-  });
-}
-
 function promiseGAPIExecute(func, options) {
   return Q.Promise(function(resolve, reject, notify) {
-    //do {
-      func(options).execute(function(resp) {
-        if (resp && resp.error) {
-          console.error(resp.error);
-          reject(resp.error);
-        }
+    func(options).execute(function(resp) {
+      if (resp && resp.error) {
+        console.error(resp.error);
+        reject(resp.error);
+      } else {
         if (resp) {
           notify(resp);
-          options.pageToken = resp.nextPageToken;
-          if (resp.nextPageToken) {
-            promiseGAPIExecute(func, options).then(resolve, reject, notify);
-          } else {
-            resolve(resp);
-          }
-        } else {
-          resolve(resp);
         }
-      });
-    //} while (options.pageToken);
+        resolve(resp);
+      }
+    });
+  }).then(function(resp) {
+    if (resp && resp.nextPageToken) {
+      options.pageToken = resp.nextPageToken;
+      return promiseGAPIExecute(func, options);
+    } else {
+      return resp;
+    }
   });
 }
 
@@ -224,7 +207,6 @@ var PhotoStore = {
     };
     // satrt loading
     this.callbackUpdate({loading: true});
-    //repeatExecute(gapi.client.drive.files.list, options, function(resp) {
     promiseGAPIExecute(gapi.client.drive.files.list, options)
     .progress(function(resp) {
       if (resp) {
