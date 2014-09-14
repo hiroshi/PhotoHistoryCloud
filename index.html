@@ -15,7 +15,9 @@
       var CLIENT_ID = '270744618004-sc56ljkbn8tabp0beq43s09p9p37cnbl.apps.googleusercontent.com';
       var SCOPES = [
        'https://www.googleapis.com/auth/drive.readonly',
-       ].join(" ");
+       //'https://www.googleapis.com/auth/drive',
+       'https://www.googleapis.com/auth/drive.appfolder',
+      ].join(" ");
 
       function handleClientLoad() {
         window.setTimeout(function() {

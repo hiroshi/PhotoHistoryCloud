@@ -154,6 +154,21 @@ function promiseUpsertFile(meta, content) {
   });
 }
 
+function promiseDownloadFile(downloadUrl) {
+  return Q.Promise(function(resolve, error, notify) {
+    var accessToken = gapi.auth.getToken().access_token;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', downloadUrl);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+    xhr.onload = function() {
+      resolve(xhr.responseText);
+    };
+    xhr.onerror = function(err) {
+      error(err);
+    };
+    xhr.send();
+  });
+}
 
 var PhotoStore = {
   items: [], // [{..., _date}]
@@ -193,13 +208,49 @@ var PhotoStore = {
     this.yearMonths = months;
   },
   load: function() {
-    // promiseUpsertFile(
-    //   {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
-    //   {date: new Date().toISOString()})
-    // .then(function(resp) {
-    //   console.log(resp);
-    // });
-    // return false;
+    // load cached items from appfolder
+    promiseGAPIExecute(gapi.client.drive.files.list, {q: "title = 'items.json' and 'appfolder' in parents"})
+    .then(function(resp) {
+      if (resp.items && resp.items.length > 0) {
+        return resp.items[0];
+      } else {
+        throw new Error("Not found: items.json");
+      }
+    }.bind(this))
+    .then(function(file) {
+      if (file.downloadUrl) {
+        return promiseDownloadFile(file.downloadUrl);
+      }
+    })
+    .then(function(responseText) {
+      this.items = JSON.parse(responseText);
+      this.fileIds = {};
+      this.items.forEach(function(item) {
+        this.fileIds[item.id] = true;
+        // TODO: refactoring
+        var dateString = item.imageMediaMetadata.date;
+        if (dateString) {
+          var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
+          if (m) {
+            dateString = m[1] + "/" + m[2] + "/" + m[3];
+          }
+        } else {
+          dateString = item.modifiedDate;
+        }
+        item._date = dateString ? new Date(dateString) : new Date();
+      });      
+      this.updateMonths();
+      this.callbackUpdate({items: this.items, months: this.yearMonths});
+    }.bind(this))
+    .catch(function(err) {
+      console.log(err);
+    })
+    .done(function() {
+      console.log("cache (items.json) loaded from appfolder.");
+    });
+    //return false;
+
+
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
       fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink,modifiedDate),nextPageToken",
@@ -227,7 +278,11 @@ var PhotoStore = {
           binSearch(items, function(e) {
             return e._date - item._date;
           }, {atIndex: function(itemIndex) {
-            items.splice(itemIndex, 0, item);
+            if (items[itemIndex] && items[itemIndex].id == item.id) {
+              items[itemIndex] = item;
+            } else {
+              items.splice(itemIndex, 0, item);
+            }
           }.bind(this)});
         }.bind(this));
         this.items = items;
@@ -247,6 +302,14 @@ var PhotoStore = {
     }.bind(this))
     .then(function(resp) {
       this.callbackUpdate({loading: false});
+      return;
+      // Upload items cache to aappfolder for quick loading on next launches.
+      return promiseUpsertFile(
+        {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
+        this.items)
+      .then(function(resp) {
+        console.log("cache (items.json) stored in appfolder.");
+      });
     }.bind(this));
   },
   // getItemsSince: function(date) {
