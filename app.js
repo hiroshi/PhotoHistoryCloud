@@ -226,14 +226,11 @@ var PhotoStore = {
     })
     .then(function(responseText) {
       var cache = JSON.parse(responseText);
-      //this.items = JSON.parse(responseText);
-      this.ordered = cache.ordered;
-      this.files = cache.files;
-      //this.files.forEach(function(item) {
-      for (var fileId in this.files) {
-        var item = this.files[fileId];
-        //this.fileIds[item.id] = true;
-        // TODO: refactoring
+      // this.ordered = cache.ordered;
+      // this.files = cache.files;
+      // TODO: refactoring - _date process
+      for (var fileId in cache.files) {
+        var item = cache.files[fileId];
         var dateString = item.imageMediaMetadata.date;
         if (dateString) {
           var m = dateString.match(/(\d{4}):(\d{2}):(.*)/);
@@ -245,6 +242,20 @@ var PhotoStore = {
         }
         item._date = dateString ? new Date(dateString) : new Date();
       }
+      // Merge already loaded results of files.list
+      this.ordered.forEach(function(fileId) {
+        var item = this.files[fileId];
+        if (!cache.files[fileId]) {
+          binSearch(cache.ordered, function(cacheFileId) {
+            return cache.files[cacheFileId]._date - item._date;
+          }, {atIndex: function(index) {
+            cache.ordered.splice(index, 0, item.id);
+          }});
+        }
+        cache.files[fileId] = item;
+      }.bind(this));
+      this.ordered = cache.ordered;
+      this.files = cache.files;
       this.updateMonths();
       this.callbackUpdate({ordered: this.ordered, months: this.yearMonths});
     }.bind(this))
