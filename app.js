@@ -171,7 +171,9 @@ function promiseDownloadFile(downloadUrl) {
 }
 
 var PhotoStore = {
-  items: [], // [{..., _date}]
+  // items: [], // [{..., _date}]
+  files: {}, // {fildId: fileMeta, ...}
+  ordered: [], // [fileId, ...] order by date ASC
   yearMonths: [], // [{index, '2009-02'},...]
   callbacks: [],
   registerUpdate: function(callback) {
@@ -183,24 +185,24 @@ var PhotoStore = {
     });
   },
   updateMonths: function() {
-    var items = this.items;
+    //var items = this.items;
     var months = [];
-    if (items.length > 0) {
-      var first = items[0]._date;
-      var last = items[items.length - 1]._date;
+    if (this.ordered.length > 0) {
+      var first = this.files[this.ordered[0]]._date;
+      var last = this.files[this.ordered[this.ordered.length - 1]]._date;
       var prev = begginingOfMonth(first);
       var next = nextMonth(first);
       var total = 0;
       while (prev < last) {
-        binSearch(items, function(e) {
-          return e._date - next;
-        }, {atIndex: function(i, found) {
+        binSearch(this.ordered, function(itemId) {
+          return this.files[itemId]._date - next;
+        }.bind(this), {atIndex: function(i, found) {
           var count = i - total;
           if (count > 0) {
             months.push({date: prev, index: i - count, count: count});
           }
           total = i;
-        }});
+        }.bind(this)});
         prev = next;
         next = nextMonth(next);
       }
@@ -223,10 +225,14 @@ var PhotoStore = {
       }
     })
     .then(function(responseText) {
-      this.items = JSON.parse(responseText);
-      this.fileIds = {};
-      this.items.forEach(function(item) {
-        this.fileIds[item.id] = true;
+      var cache = JSON.parse(responseText);
+      //this.items = JSON.parse(responseText);
+      this.ordered = cache.ordered;
+      this.files = cache.files;
+      //this.files.forEach(function(item) {
+      for (var fileId in this.files) {
+        var item = this.files[fileId];
+        //this.fileIds[item.id] = true;
         // TODO: refactoring
         var dateString = item.imageMediaMetadata.date;
         if (dateString) {
@@ -238,9 +244,9 @@ var PhotoStore = {
           dateString = item.modifiedDate;
         }
         item._date = dateString ? new Date(dateString) : new Date();
-      });      
+      }
       this.updateMonths();
-      this.callbackUpdate({items: this.items, months: this.yearMonths});
+      this.callbackUpdate({ordered: this.ordered, months: this.yearMonths});
     }.bind(this))
     .catch(function(err) {
       console.log(err);
@@ -261,7 +267,8 @@ var PhotoStore = {
     promiseGAPIExecute(gapi.client.drive.files.list, options)
     .progress(function(resp) {
       if (resp) {
-        var items = this.items;
+        console.log("progress: " + resp.items.length);
+        //var items = this.items;
         resp.items.forEach(function(item) {
           // imageMediaMetadata.date may be in '2014:08:13 17:57:04' format,
           // so convert it to be able to be parsed as Date.
@@ -275,42 +282,44 @@ var PhotoStore = {
             dateString = item.modifiedDate;
           }
           item._date = dateString ? new Date(dateString) : new Date();
-          binSearch(items, function(e) {
-            return e._date - item._date;
-          }, {atIndex: function(itemIndex) {
-            if (items[itemIndex] && items[itemIndex].id == item.id) {
-              items[itemIndex] = item;
-            } else {
-              items.splice(itemIndex, 0, item);
-            }
-          }.bind(this)});
+          if (!this.files[item.id]) {
+            binSearch(this.ordered, function(fileId) {
+              return this.files[fileId]._date - item._date;
+            }.bind(this), {atIndex: function(index) {
+              this.ordered.splice(index, 0, item.id);
+            }.bind(this)});
+          }
+          this.files[item.id] = item;
+          // binSearch(this.items, function(fileId) {
+          //   return this.files[fileId]._date - item._date;
+          //   //return e._date - item._date;
+          // }, {atIndex: function(itemIndex) {
+          //   if (items[itemIndex] && items[itemIndex].id == item.id) {
+          //     items[itemIndex] = item;
+          //   } else {
+          //     items.splice(itemIndex, 0, item);
+          //   }
+          // }.bind(this)});
         }.bind(this));
-        this.items = items;
+        //this.items = items;
         this.updateMonths();
-        this.callbackUpdate({items: items, months: this.yearMonths});
-        if (resp.nextPageToken) {
-          // options.pageToken = resp.nextPageToken;
-          // _retrieve(gapi.client.drive.files.list(options));
-        } else {
-          // finish loading
-          //this.callbackUpdate({loading: false});
-        }
-      // } else {
-      //   // No images found.
-      //   this.callbackUpdate({loading: false});
+        this.callbackUpdate({ordered: this.ordered, months: this.yearMonths});
       }
     }.bind(this))
     .then(function(resp) {
       this.callbackUpdate({loading: false});
-      return;
       // Upload items cache to aappfolder for quick loading on next launches.
       return promiseUpsertFile(
         {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
-        this.items)
+        {files: this.files, ordered: this.ordered})
       .then(function(resp) {
         console.log("cache (items.json) stored in appfolder.");
       });
-    }.bind(this));
+    }.bind(this))
+    .catch(function(err) {
+      console.error(err);
+    })
+    .done();
   },
   // getItemsSince: function(date) {
   //   var index = 0;
@@ -352,12 +361,12 @@ var Account = {
 var NavMonth = React.createClass({
   _handleClick: function() {
     var index = null;
-    binSearch(PhotoStore.items, function(e) {
-      return e._date - this.props.date;
+    binSearch(PhotoStore.ordered, function(itemId) {
+      return PhotoStore.files[itemId]._date - this.props.date;
     }.bind(this), {atIndex: function(i) {
       index = i;
     }});
-    window.scrollTo(0, document.body.offsetHeight * index / PhotoStore.items.length);
+    window.scrollTo(0, document.body.offsetHeight * index / PhotoStore.ordered.length);
     this.props.toggle();
     return false;
   },
@@ -460,8 +469,8 @@ var Navigation = React.createClass({
   render: function() {
     var items = [];
     if (this.props.email) {
-      var index = Math.floor(PhotoStore.items.length * window.scrollY / document.body.offsetHeight);
-      var item = PhotoStore.items[index];
+      var index = Math.floor(PhotoStore.ordered.length * window.scrollY / document.body.offsetHeight);
+      var item = PhotoStore.files[PhotoStore.ordered[index]];
       if (item) {
         var date = item._date;
         var text = date.toLocaleDateString().match(/\d+[\/年]\d+(?:月)?/)[0];
@@ -499,7 +508,7 @@ var Navigation = React.createClass({
 
 var Thumbnails = React.createClass({
   render: function() {
-    var total = this.props.items.length;
+    var total = this.props.ordered.length;
     var cols = getCols();
     var thumbs = [];
     var thumbs_style = {
@@ -509,7 +518,7 @@ var Thumbnails = React.createClass({
       'padding-top': this.props.startRow * getThumbHeight(),
     };
     for (var i = 0; i < (this.props.rowCount * cols); i++) {
-      var item = this.props.items[(this.props.startRow * cols) + i];
+      var item = PhotoStore.files[this.props.ordered[(this.props.startRow * cols) + i]];
       if (item) {
         var meta = item.imageMediaMetadata;
         var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
@@ -546,7 +555,7 @@ var Thumbnails = React.createClass({
 var PhotoApp = React.createClass({
   getInitialState: function() {
     return {
-      items: [],
+      ordered: [],
       months: [],
       visibleThumbCount: 50,
       visibleThumbIndex: 0,
@@ -562,7 +571,7 @@ var PhotoApp = React.createClass({
        //var y = window.scrollY;
       //console.log(window.scrollY);
       //var document.getElementsByClassName('thumb')[0]
-      var total = this.state.items.length;
+      var total = this.state.ordered.length;
       var scrollY = window.scrollY;
       var contentH = document.body.offsetHeight;
       var frameH = window.innerHeight;
@@ -601,7 +610,7 @@ var PhotoApp = React.createClass({
     //   );
     // }
     //var loading = this.state.loading ? "loading..." : "";
-    if (!this.state.items.length && !this.state.loading) {
+    if (!this.state.ordered.length && !this.state.loading) {
         count = (
           <span>
             No image found. Try uploading some via <a href="https://drive.google.com/" target="_blank">Google Drive</a>.
@@ -613,12 +622,12 @@ var PhotoApp = React.createClass({
          <Navigation
            index={this.state.visibleThumbIndex}
            months={this.state.months}
-           count={this.state.items.length}
+           count={this.state.ordered.length}
            loading={this.state.loading}
            authFailed={this.state.authFailed}
            email={this.state.email} />
          <Thumbnails
-           items={this.state.items}
+           ordered={this.state.ordered}
            startRow={this.state.visibleThumbIndex / getCols()}
            rowCount={this.state.visibleThumbCount / getCols()} />
        </div>
