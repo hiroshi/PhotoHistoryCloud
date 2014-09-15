@@ -8,21 +8,29 @@ It displays thumbnails of all images in your [Google Drive](https://drive.google
 
 Known Issues
 ------------
+- Thumbnails sometimes get 403 Forbidden.
+-- [Thumbnails provided by Google Drive API are short lived](http://stackoverflow.com/a/25332790/338986).
+-- For now please reload the browser.
 - If a photo contains creation date in EXIF and TIFF, Google Drive seems to prefer TIFF.
+
+Release notes
+-------------
+- 2014-09-15: Experimentally caching results of files.list API requests.
+- 2014-09-06: First alpha release.
+
+
+TODO
+----
+- Store permanent thumbnails somewhere... (Maybe in appfolder).
+- Google Calendar integration. (Jump to the photos on the day of an event.)
+- Videos!
+- Better photo viewer than just link to Google Drive.
+  - I know Google Drive preview in mobile browser is teribble.
 
 
 Contact
 -------
 - [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
-
-
-TODO
-----
-- Google Calendar integration. (Jump to the photos on the day of an event.)
-- Cash manifest of images instead of loading from Google Drive API every time.
-- Videos!
-- Better photo viewer than just link to Google Drive.
-  - I know Google Drive preview in mobile browser is teribble.
 
 
 History about "PhotoHistory"
