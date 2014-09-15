@@ -1,5 +1,6 @@
 ---
 title: Document - PhotoHistory cloud
+layout: default
 ---
 [PhotoHistory cloud](./)
 ==================
@@ -9,8 +10,8 @@ It displays thumbnails of all images in your [Google Drive](https://drive.google
 Known Issues
 ------------
 - Thumbnails sometimes get 403 Forbidden.
--- [Thumbnails provided by Google Drive API are short lived](http://stackoverflow.com/a/25332790/338986).
--- For now please reload the browser.
+  - [Thumbnails provided by Google Drive API are short lived](http://stackoverflow.com/a/25332790/338986).
+  - For now please reload the browser.
 - If a photo contains creation date in EXIF and TIFF, Google Drive seems to prefer TIFF.
 
 Release notes
@@ -26,11 +27,6 @@ TODO
 - Videos!
 - Better photo viewer than just link to Google Drive.
   - I know Google Drive preview in mobile browser is teribble.
-
-
-Contact
--------
-- [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
 
 
 History about "PhotoHistory"
@@ -59,3 +55,10 @@ Something like FAQ
     - https://plus.google.com/ doesn't provide "All Photos" and "jump to month" feature.
     - Google+.app has "All Photos", but no "jump to month".
     - It is impossible to see "March 2006 photos".
+
+
+Links
+-----
+- [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
+- [hiroshi.github.io](https://hiroshi.github.io/)
+
