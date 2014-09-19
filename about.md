@@ -11,7 +11,8 @@ Known Issues
 ------------
 - Thumbnails sometimes get 403 Forbidden.
   - [Thumbnails provided by Google Drive API are short lived](http://stackoverflow.com/a/25332790/338986).
-  - For now please reload the browser.
+  - It is still loading, please wait. Thumbnail urls are about to be updated.
+  - If you leave the page for a while, please reload to update thumbnail urls.
 - If a photo contains creation date in EXIF and TIFF, Google Drive seems to prefer TIFF.
 
 Release notes
@@ -60,5 +61,5 @@ Something like FAQ
 Links
 -----
 - [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
-- [hiroshi.github.io](https://hiroshi.github.io/)
+- [hiroshi.github.io](https://hiroshi.github.io/) - My other projects
 
