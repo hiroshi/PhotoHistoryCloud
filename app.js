@@ -489,7 +489,7 @@ var Navigation = React.createClass({
       }
       items.push(<li key="count">{this.props.count} photos</li>);
       if (this.props.loading) {
-        items.push(<li key="loading">loading...</li>);
+        items.push(<li key="loading"><img src="loading.gif" /></li>);
       }
     } else if (this.props.authFailed) {
       items.push(<li key="login"><Login /></li>);
