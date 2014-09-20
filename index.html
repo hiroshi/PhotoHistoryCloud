@@ -11,29 +11,20 @@
     <!--<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/react-with-addons.min.js"></script>-->
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/JSXTransformer.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/q.js/1.0.1/q.js"></script>
+    <script type="text/javascript" src="https://apis.google.com/js/client.js"></script>
     <link href="./app.css" rel="stylesheet" type="text/css">
     <script type="text/jsx" src="./app.js"></script>
-    <script type="text/javascript">
-      var CLIENT_ID = '270744618004-sc56ljkbn8tabp0beq43s09p9p37cnbl.apps.googleusercontent.com';
-      var SCOPES = [
-       'https://www.googleapis.com/auth/drive.readonly',
-       //'https://www.googleapis.com/auth/drive',
-       'https://www.googleapis.com/auth/drive.appfolder',
-      ].join(" ");
-
-      function handleClientLoad() {
-        window.setTimeout(function() {
-          Account.check();
-        }, 100);
-      }
-    </script>
-    <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
   </head>
   <body>
     <div class="container">
       <input type="button" id="authorizeButton" style="display: none" value="Authorize" />
       <div id="app"></div>
     </div>
+    <script type="text/javascript">
+      window.addEventListener('load', function(e) {
+        Account.check();
+      })
+    </script>
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
       ga('create', 'UA-768998-6', 'auto');

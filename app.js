@@ -344,14 +344,23 @@ var PhotoStore = {
 };
 
 var Account = {
+  CLIENT_ID: '270744618004-sc56ljkbn8tabp0beq43s09p9p37cnbl.apps.googleusercontent.com',
+  SCOPES: [
+    'https://www.googleapis.com/auth/drive.readonly',
+    //'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/drive.appfolder',
+  ].join(" "),
   check: function() {
+    console.log(gapi);
+    console.log(gapi.auth);
+    console.log(gapi.auth.authorize);
     gapi.auth.authorize(
-      {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true},
+      {'client_id': this.CLIENT_ID, 'scope': this.SCOPES, 'immediate': true},
       this._handleAuthResult);
   },
   authorize: function() {
     gapi.auth.authorize(
-      {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false},
+      {'client_id': this.CLIENT_ID, 'scope': this.SCOPES, 'immediate': false},
       this._handleAuthResult);
   },
   _handleAuthResult: function(authResult) {
@@ -657,4 +666,3 @@ window.App = React.renderComponent(
     Account.check();
   }, 1);
 }*/
-
