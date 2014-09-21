@@ -114,7 +114,7 @@ function promiseUpsertFile(meta, content) {
     var method = 'POST';
     if (resp && resp.items.length > 0) { // update
       var fileId = resp.items[0].id;
-      console.log("fileId: " + fileId);
+      //console.log("fileId: " + fileId);
       path.push(fileId);
       method = 'PUT';
     }
@@ -172,7 +172,7 @@ function promiseDownloadFile(downloadUrl) {
 
 var PhotoStore = {
   // items: [], // [{..., _date}]
-  files: {}, // {fildId: fileMeta, ...}
+  files: {}, // {fileId: fileMeta, ...}
   ordered: [], // [fileId, ...] order by date ASC
   yearMonths: [], // [{index, '2009-02'},...]
   callbacks: [],
@@ -209,7 +209,7 @@ var PhotoStore = {
     }
     this.yearMonths = months;
   },
-  load: function() {
+  loadCache: function() {
     // load cached items from appfolder
     promiseGAPIExecute(gapi.client.drive.files.list, {q: "title = 'items.json' and 'appfolder' in parents"})
     .then(function(resp) {
@@ -265,9 +265,8 @@ var PhotoStore = {
     .done(function() {
       console.log("cache (items.json) loaded from appfolder.");
     });
-    //return false;
-
-
+  },
+  load: function() {
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
       fields: "items(id,imageMediaMetadata(date,height,width,rotation),thumbnailLink,alternateLink,modifiedDate),nextPageToken",
@@ -351,9 +350,6 @@ var Account = {
     'https://www.googleapis.com/auth/drive.appfolder',
   ].join(" "),
   check: function() {
-    console.log(gapi);
-    console.log(gapi.auth);
-    console.log(gapi.auth.authorize);
     gapi.auth.authorize(
       {'client_id': this.CLIENT_ID, 'scope': this.SCOPES, 'immediate': true},
       this._handleAuthResult);
@@ -369,7 +365,8 @@ var Account = {
         gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
           App.setState({email: resp.user.emailAddress})
         });
-        console.log("load");
+        console.log("start loading...");
+        PhotoStore.loadCache();
         PhotoStore.load();
       });
     } else {
@@ -526,6 +523,29 @@ var Navigation = React.createClass({
   }
 });
 
+var Thumbnail = React.createClass({
+  _handleError: function(e) {
+    //console.error(e.nativeEvent);
+    //gapi.client.drive.files.get({fileId: 
+  },
+  render: function() {
+    var meta = this.props.item.imageMediaMetadata;
+    var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
+    var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
+    var date = this.props.item._date;
+    var dateLabel = shortDateTimeString(date);
+    // <span className="none">{meta}</span>
+    return (
+      <div className="thumb">
+        <a name={yearMonthString(this.props.item._date)} href={this.props.item.alternateLink} target="_blank">
+          <img src={this.props.item.thumbnailLink} style={imgStyle} onError={this._handleError} />
+          <div className="label">{dateLabel}</div>
+        </a>
+      </div>
+    );
+  }
+});
+
 var Thumbnails = React.createClass({
   render: function() {
     var total = this.props.ordered.length;
@@ -540,25 +560,7 @@ var Thumbnails = React.createClass({
     for (var i = 0; i < (this.props.rowCount * cols); i++) {
       var item = PhotoStore.files[this.props.ordered[(this.props.startRow * cols) + i]];
       if (item) {
-        var meta = item.imageMediaMetadata;
-        var portrait = (Number(meta.width) < Number(meta.height)) ^ (meta.rotation % 2);
-        var imgStyle = portrait ? {width: "100%"} : {height: "100%"};
-        var date = item._date;
-        var dateLabel = shortDateTimeString(date);
-        var img = (
-          <div>
-            <img src={item.thumbnailLink} style={imgStyle} />
-            <div className="label">{dateLabel}</div>
-          </div>
-        );
-        // <span className="none">{meta}</span>
-        thumbs.push(
-          <div key={item.id} className="thumb">
-            <a name={yearMonthString(item._date)} href={item.alternateLink} target="_blank">
-              {img}
-            </a>
-          </div>
-        );
+        thumbs.push(<Thumbnail key={item.id} item={item} />);
       }
     }
     return (
