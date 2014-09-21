@@ -176,6 +176,7 @@ var PhotoStore = {
   ordered: [], // [fileId, ...] order by date ASC
   yearMonths: [], // [{index, '2009-02'},...]
   callbacks: [],
+  loading: false,
   registerUpdate: function(callback) {
     this.callbacks.push(callback);
   },
@@ -275,6 +276,10 @@ var PhotoStore = {
         console.log("cache (items.json) stored in appfolder.");
     });
   },
+  setLoading: function(loading) {
+    this.loading = loading;
+    this.callbackUpdate({loading: loading});
+  },
   load: function() {
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
@@ -282,7 +287,10 @@ var PhotoStore = {
       maxResults: 1000
     };
     // satrt loading
-    this.callbackUpdate({loading: true});
+    if (this.loading) {
+      return;
+    }
+    this.setLoading(true);
     promiseGAPIExecute(gapi.client.drive.files.list, options)
     .progress(function(resp) {
       if (resp) {
@@ -326,10 +334,11 @@ var PhotoStore = {
       }
     }.bind(this))
     .catch(function(err) {
+      this.setLoading(false);
       console.error(err);
-    })
+    }.bind(this))
     .done(function(resp) {
-      this.callbackUpdate({loading: false});
+      this.setLoading(false);
       this.storeCache();
     }.bind(this));
   },
@@ -367,7 +376,7 @@ var Account = {
         gapi.client.drive.about.get({fields: "user"}).execute(function(resp) {
           App.setState({email: resp.user.emailAddress})
         });
-        console.log("start loading...");
+        console.log("start loading cache and reload all...");
         PhotoStore.loadCache();
         PhotoStore.load();
       });
@@ -528,7 +537,14 @@ var Navigation = React.createClass({
 var Thumbnail = React.createClass({
   _handleError: function(e) {
     //console.error(e.nativeEvent);
-    //gapi.client.drive.files.get({fileId: 
+    gapi.client.drive.files.get({fileId: this.props.item.id, fields: "thumbnailLink"}).execute(function(resp) {
+      // TODO: refactoring...
+      PhotoStore.files[this.props.item.id].thumbnailLink = resp.thumbnailLink;
+      console.log("update thumbnail: " + this.props.item.id);
+      PhotoStore.callbackUpdate({files: PhotoStore.files});
+      // Try to re-load all if not yet.
+      PhotoStore.load();
+    }.bind(this));
   },
   render: function() {
     var meta = this.props.item.imageMediaMetadata;
@@ -583,7 +599,7 @@ var PhotoApp = React.createClass({
       months: [],
       visibleThumbCount: 50,
       visibleThumbIndex: 0,
-      loading: true,
+      loading: false,
     };
   },
   // FIXME: implement componentDidUnmount

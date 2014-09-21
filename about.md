@@ -9,21 +9,18 @@ It displays thumbnails of all images in your [Google Drive](https://drive.google
 
 Known Issues
 ------------
-- Thumbnails sometimes get 403 Forbidden.
-  - [Thumbnails provided by Google Drive API are short lived](http://stackoverflow.com/a/25332790/338986).
-  - It is still loading, please wait. Thumbnail urls are about to be updated.
-  - If you leave the page for a while, please reload to update thumbnail urls.
 - If a photo contains creation date in EXIF and TIFF, Google Drive seems to prefer TIFF.
+
 
 Release notes
 -------------
+- 2014-09-21: Try to reload thumbnail urls when they are expired.
 - 2014-09-15: Experimentally caching results of files.list API requests.
 - 2014-09-06: First alpha release.
 
 
 TODO
 ----
-- Store permanent thumbnails somewhere... (Maybe in appfolder).
 - Google Calendar integration. (Jump to the photos on the day of an event.)
 - Videos!
 - Better photo viewer than just link to Google Drive.
@@ -43,6 +40,8 @@ History about "PhotoHistory"
   - I'm not sure, but may be numbers and/or size of photos may matter...
   - Beside, photos occupy certain size of total storage of the device.
   - It's the time to think a cloud solution...
+- Sep 2014:
+  - PhotoHistory cloud alpha released.
 
 
 Something like FAQ
@@ -62,4 +61,3 @@ Links
 -----
 - [@PhotoHistoryApp](https://twitter.com/PhotoHistoryApp)
 - [hiroshi.github.io](https://hiroshi.github.io/) - My other projects
-
