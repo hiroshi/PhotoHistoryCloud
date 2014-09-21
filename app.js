@@ -266,6 +266,15 @@ var PhotoStore = {
       console.log("cache (items.json) loaded from appfolder.");
     });
   },
+  storeCache: function() {
+    // Upload items cache to aappfolder for quick loading on next launches.
+    promiseUpsertFile(
+      {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
+      {files: this.files, ordered: this.ordered})
+    .done(function(resp) {
+        console.log("cache (items.json) stored in appfolder.");
+    });
+  },
   load: function() {
     var options = {
       q: "mimeType contains 'image/' and trashed = false",
@@ -316,20 +325,13 @@ var PhotoStore = {
         this.callbackUpdate({ordered: this.ordered, months: this.yearMonths});
       }
     }.bind(this))
-    .then(function(resp) {
-      this.callbackUpdate({loading: false});
-      // Upload items cache to aappfolder for quick loading on next launches.
-      return promiseUpsertFile(
-        {title: 'items.json', mimeType: 'application/json', parents: [{id: 'appfolder'}]},
-        {files: this.files, ordered: this.ordered})
-      .then(function(resp) {
-        console.log("cache (items.json) stored in appfolder.");
-      });
-    }.bind(this))
     .catch(function(err) {
       console.error(err);
     })
-    .done();
+    .done(function(resp) {
+      this.callbackUpdate({loading: false});
+      this.storeCache();
+    }.bind(this));
   },
   // getItemsSince: function(date) {
   //   var index = 0;
